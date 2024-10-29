@@ -1,100 +1,135 @@
-import Image from "next/image";
+'use client';
+
+import Link from "next/link";
+import { useAuth } from './hooks/useAuth';
+import { FaFileInvoiceDollar, FaCreditCard, FaChartLine, FaLock, FaRegClock, FaPalette } from 'react-icons/fa';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const { user, loading } = useAuth();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  return (
+    <div className="flex flex-col items-center min-h-screen">
+      {/* Hero Section */}
+      <header className="text-center py-20 px-4 bg-gradient-to-b from-white to-gray-50 w-full">
+        <h1 className="text-5xl font-bold mb-4">Welcome to Invoiz</h1>
+        <p className="text-2xl mb-8 text-gray-600">Create professional invoices with ease</p>
+        <div className="flex gap-4 justify-center">
+          {loading ? (
+            <p>Loading...</p>
+          ) : user ? (
+            <Link href="/dashboard" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+              Go to Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/signup" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+                Sign Up
+              </Link>
+              <Link href="/login" className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-xl transition-colors">
+                Log In
+              </Link>
+            </>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </header>
+
+      {/* Features Section */}
+      <section className="py-20 px-4 w-full bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold text-center mb-12">Powerful Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="text-blue-500 mb-4">
+                <FaFileInvoiceDollar size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Easy Invoice Creation</h3>
+              <p className="text-gray-600">Create professional invoices in minutes with our intuitive interface and customizable templates.</p>
+            </div>
+
+            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="text-blue-500 mb-4">
+                <FaCreditCard size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Secure Payments</h3>
+              <p className="text-gray-600">Accept payments online with integrated Stripe and PayPal support, all with bank-level security.</p>
+            </div>
+
+            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="text-blue-500 mb-4">
+                <FaChartLine size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Real-time Analytics</h3>
+              <p className="text-gray-600">Track payments, monitor cash flow, and gain insights with detailed financial reports.</p>
+            </div>
+
+            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="text-blue-500 mb-4">
+                <FaPalette size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Customizable Templates</h3>
+              <p className="text-gray-600">Choose from a variety of professional templates and customize them to match your brand.</p>
+            </div>
+
+            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="text-blue-500 mb-4">
+                <FaRegClock size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Automated Reminders</h3>
+              <p className="text-gray-600">Set up automatic payment reminders and late payment notifications to improve cash flow.</p>
+            </div>
+
+            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="text-blue-500 mb-4">
+                <FaLock size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Secure Storage</h3>
+              <p className="text-gray-600">All your invoices are securely stored in the cloud, accessible anytime, anywhere.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-20 px-4 w-full bg-gray-50">
+        <h2 className="text-4xl font-bold text-center mb-12">Simple Pricing</h2>
+        <div className="flex flex-col md:flex-row gap-8 justify-center max-w-4xl mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-lg flex-1 max-w-md">
+            <h3 className="text-2xl font-bold mb-2">Free</h3>
+            <p className="text-gray-600 mb-4">Perfect for individuals and small businesses</p>
+            <p className="text-4xl font-bold mb-6">$0<span className="text-lg text-gray-600">/month</span></p>
+            <ul className="mb-8 space-y-2">
+              <li>✓ Up to 5 invoices per month</li>
+              <li>✓ Basic templates</li>
+              <li>✓ Email support</li>
+              <li>✓ Basic analytics</li>
+            </ul>
+            <Link href="/signup" className="block text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+              Get Started
+            </Link>
+          </div>
+
+          <div className="bg-white p-8 rounded-lg shadow-lg flex-1 max-w-md border-2 border-blue-500">
+            <div className="inline-block bg-blue-500 text-white px-3 py-1 rounded-full text-sm mb-4">MOST POPULAR</div>
+            <h3 className="text-2xl font-bold mb-2">Pro</h3>
+            <p className="text-gray-600 mb-4">For growing businesses</p>
+            <p className="text-4xl font-bold mb-6">$19.99<span className="text-lg text-gray-600">/month</span></p>
+            <ul className="mb-8 space-y-2">
+              <li>✓ Unlimited invoices</li>
+              <li>✓ Premium templates</li>
+              <li>✓ Priority support</li>
+              <li>✓ Advanced analytics</li>
+              <li>✓ Custom branding</li>
+              <li>✓ API access</li>
+            </ul>
+            <Link href="/signup" className="block text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+              Get Started
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="w-full py-8 text-center text-gray-500 bg-white">
+        <p>&copy; 2024 Invoiz. All rights reserved.</p>
       </footer>
     </div>
   );
