@@ -11,35 +11,45 @@ import { doc, setDoc } from 'firebase/firestore';
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-
-  const createUserDocument = async (user: any) => {
-    const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, {
-      email: user.email,
-      subscribed: 'no',
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await createUserDocument(userCredential.user);
+      if (name.trim()) {
+        await updateProfile(userCredential.user, { displayName: name });
+      }
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        email: userCredential.user.email,
+        name: name.trim() || '',
+        createdAt: new Date(),
+        stripeConnected: false,
+        paypalEmail: null
+      });
       router.push('/dashboard');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      console.error('Error signing up:', error);
+      setError('Failed to create account');
     }
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      await createUserDocument(result.user);
+      await setDoc(doc(db, 'users', result.user.uid), {
+        email: result.user.email,
+        name: result.user.displayName,
+        createdAt: new Date(),
+        stripeConnected: false,
+        paypalEmail: null
+      });
       router.push('/dashboard');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      setError('Failed to sign in with Google');
     }
   };
 
@@ -48,6 +58,16 @@ export default function SignUp() {
       <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <div className="mb-4">
+          <label htmlFor="name" className="block text-sm font-bold mb-2">Name</label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md"
+          />
+        </div>
         <div className="mb-4">
           <label htmlFor="email" className="block text-sm font-bold mb-2">Email</label>
           <input
@@ -76,7 +96,7 @@ export default function SignUp() {
       </form>
       <div className="mt-4 w-full max-w-sm">
         <button
-          onClick={handleGoogleSignUp}
+          onClick={handleGoogleSignIn}
           className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-600"
         >
           Sign up with Google
