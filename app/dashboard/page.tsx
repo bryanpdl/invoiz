@@ -34,7 +34,13 @@ export default function Dashboard() {
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+  const [dateRange, setDateRange] = useState<{ 
+    start: Date | null; 
+    end: Date | null 
+  }>({ 
+    start: null, 
+    end: null 
+  });
   const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' }>({
     field: 'date',
     direction: 'desc'
@@ -148,13 +154,13 @@ export default function Dashboard() {
       );
     }
 
-    // Apply date filter with proper null checking and type narrowing
+    // Apply date filter with proper null checking
     if (dateRange.start && dateRange.end) {
+      const startTime = dateRange.start.getTime();
+      const endTime = dateRange.end.getTime();
+      
       filtered = filtered.filter(invoice => {
         const invoiceDate = new Date(invoice.date).getTime();
-        const startTime = dateRange.start.getTime();
-        const endTime = dateRange.end.getTime();
-        
         return invoiceDate >= startTime && invoiceDate <= endTime;
       });
     }
