@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase/config';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,7 +11,6 @@ import { doc, setDoc } from 'firebase/firestore';
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
@@ -19,12 +18,8 @@ export default function SignUp() {
     e.preventDefault();
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      if (name.trim()) {
-        await updateProfile(userCredential.user, { displayName: name });
-      }
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
-        name: name.trim() || '',
         createdAt: new Date(),
         stripeConnected: false,
         paypalEmail: null
@@ -58,16 +53,6 @@ export default function SignUp() {
       <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="w-full max-w-sm">
-        <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-bold mb-2">Name</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
         <div className="mb-4">
           <label htmlFor="email" className="block text-sm font-bold mb-2">Email</label>
           <input

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Invoice, InvoiceItem, PaymentTerms } from '../types/invoice';
-import { FaUniversity, FaCreditCard, FaPaypal, FaPercent, FaBolt } from 'react-icons/fa';
+import { FaUniversity, FaCreditCard, FaPaypal, FaPercent, FaBolt, FaMinus } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import PaymentIntegrationModal from './PaymentIntegrationModal';
 import { useRouter } from 'next/navigation';
@@ -264,9 +264,9 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
             <button
               type="button"
               onClick={() => handleRemoveItem(index)}
-              className="p-2 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+              className="p-2 text-red-500 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
             >
-              🗑️
+              <FaMinus size={16} />
             </button>
           </div>
         ))}

@@ -20,6 +20,8 @@ import {
   FaCreditCard 
 } from 'react-icons/fa';
 import Image from 'next/image';
+import QuickMenu from '../components/QuickMenu';
+import InvoiceControls from '../components/InvoiceControls';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -28,6 +30,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('invoices');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending'>('all');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [sortConfig, setSortConfig] = useState({ field: 'date', direction: 'desc' as 'asc' | 'desc' });
 
   useEffect(() => {
     if (user) {
@@ -114,15 +121,63 @@ export default function Dashboard() {
     );
   };
 
+  useEffect(() => {
+    applyFilters();
+  }, [invoices, searchQuery, statusFilter, dateRange, sortConfig]);
+
+  const applyFilters = () => {
+    let filtered = [...invoices];
+
+    // Apply search
+    if (searchQuery) {
+      filtered = filtered.filter(invoice => 
+        invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(invoice => 
+        statusFilter === 'paid' ? invoice.paid : !invoice.paid
+      );
+    }
+
+    // Apply date filter
+    if (dateRange.start && dateRange.end) {
+      filtered = filtered.filter(invoice => {
+        const invoiceDate = new Date(invoice.date);
+        return invoiceDate >= new Date(dateRange.start) && 
+               invoiceDate <= new Date(dateRange.end);
+      });
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      const aValue = a[sortConfig.field as keyof Invoice];
+      const bValue = b[sortConfig.field as keyof Invoice];
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortConfig.direction === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      
+      return sortConfig.direction === 'asc'
+        ? (aValue as number) - (bValue as number)
+        : (bValue as number) - (aValue as number);
+    });
+
+    setFilteredInvoices(filtered);
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen bg-gray-50">
         <nav className="bg-gray-800 text-white p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-4">
-            <Link href="/create-invoice" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-xl">
-              Create New Invoice
-            </Link>
+            
             
             {/* User Avatar Dropdown */}
             <div className="relative flex items-center">
@@ -248,13 +303,23 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Add InvoiceControls before the content section */}
+          {activeTab === 'invoices' && (
+            <InvoiceControls
+              onSearch={setSearchQuery}
+              onFilterStatus={setStatusFilter}
+              onFilterDate={(start, end) => setDateRange({ start, end })}
+              onSort={(field, direction) => setSortConfig({ field, direction })}
+            />
+          )}
+
           {/* Content */}
           {activeTab === 'invoices' ? (
             loading ? (
               <p>Loading invoices...</p>
-            ) : invoices.length > 0 ? (
+            ) : filteredInvoices.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {invoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => (
                   <div key={invoice.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -309,6 +374,8 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        <QuickMenu />
       </div>
     </ProtectedRoute>
   );
