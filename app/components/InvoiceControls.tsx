@@ -1,115 +1,80 @@
- 'use client';
+'use client';
 
 import { useState } from 'react';
 import { FaSearch, FaFilter, FaSort } from 'react-icons/fa';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 interface InvoiceControlsProps {
   onSearch: (query: string) => void;
-  onFilterStatus: (status: 'all' | 'paid' | 'pending') => void;
-  onFilterDate: (startDate: string, endDate: string) => void;
+  onFilterStatus: (status: string) => void;
+  onFilterDate: (start: Date | null, end: Date | null) => void;
   onSort: (field: string, direction: 'asc' | 'desc') => void;
 }
 
-export default function InvoiceControls({ 
-  onSearch, 
-  onFilterStatus, 
-  onFilterDate, 
-  onSort 
-}: InvoiceControlsProps) {
-  const [showFilters, setShowFilters] = useState(false);
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+export default function InvoiceControls({ onSearch, onFilterStatus, onFilterDate, onSort }: InvoiceControlsProps) {
+  const [dateRange, setDateRange] = useState<[Date | undefined, Date | undefined]>([undefined, undefined]);
+  const [startDate, endDate] = dateRange;
+
+  const handleDateChange = (update: [Date | null, Date | null]) => {
+    setDateRange([
+      update[0] ?? undefined,
+      update[1] ?? undefined
+    ]);
+    onFilterDate(update[0], update[1]);
+  };
 
   return (
     <div className="mb-6 space-y-4">
-      {/* Search and Filter Controls */}
-      <div className="flex flex-wrap gap-4">
-        {/* Search */}
-        <div className="flex-grow max-w-md">
+      {/* Search and Status Filter Row */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
           <div className="relative">
             <input
               type="text"
-              placeholder="Search by client or invoice number..."
+              placeholder="Search invoices..."
               onChange={(e) => onSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 text-gray-600 text-sm"
             />
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
         </div>
-
-        {/* Filter Toggle */}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+        <select
+          onChange={(e) => onFilterStatus(e.target.value)}
+          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 text-gray-600 text-sm bg-white"
         >
-          <FaFilter className="mr-2" />
-          Filters
-        </button>
+          <option value="all">All Status</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
 
-        {/* Sort Dropdown */}
+      {/* Date Range and Sort Row */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateChange}
+            placeholderText="Filter by date range"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 text-gray-600 text-sm"
+            isClearable={true}
+          />
+        </div>
         <select
           onChange={(e) => {
             const [field, direction] = e.target.value.split('-');
             onSort(field, direction as 'asc' | 'desc');
           }}
-          className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 text-gray-600 text-sm bg-white"
         >
-          <option value="date-desc">Date (Newest)</option>
-          <option value="date-asc">Date (Oldest)</option>
-          <option value="total-desc">Amount (Highest)</option>
-          <option value="total-asc">Amount (Lowest)</option>
-          <option value="clientName-asc">Client Name (A-Z)</option>
-          <option value="clientName-desc">Client Name (Z-A)</option>
+          <option value="date-desc">Latest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="total-desc">Highest Amount</option>
+          <option value="total-asc">Lowest Amount</option>
         </select>
       </div>
-
-      {/* Expanded Filters */}
-      {showFilters && (
-        <div className="p-4 bg-gray-50 rounded-lg space-y-4">
-          <div className="flex flex-wrap gap-4">
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                onChange={(e) => onFilterStatus(e.target.value as 'all' | 'paid' | 'pending')}
-                className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-
-            {/* Date Range Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date Range
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={dateRange.start}
-                  onChange={(e) => {
-                    setDateRange({ ...dateRange, start: e.target.value });
-                    onFilterDate(e.target.value, dateRange.end);
-                  }}
-                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="date"
-                  value={dateRange.end}
-                  onChange={(e) => {
-                    setDateRange({ ...dateRange, end: e.target.value });
-                    onFilterDate(dateRange.start, e.target.value);
-                  }}
-                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

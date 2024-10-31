@@ -8,128 +8,159 @@ export default function Home() {
   const { user, loading } = useAuth();
 
   return (
-    <div className="flex flex-col items-center min-h-screen">
-      {/* Hero Section */}
-      <header className="text-center py-20 px-4 bg-gradient-to-b from-white to-gray-50 w-full">
-        <h1 className="text-5xl font-bold mb-4">Welcome to Invoiz</h1>
-        <p className="text-2xl mb-8 text-gray-600">Create professional invoices with ease</p>
-        <div className="flex gap-4 justify-center">
-          {loading ? (
-            <p>Loading...</p>
-          ) : user ? (
-            <Link href="/dashboard" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-              Go to Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link href="/signup" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors">
-                Sign Up
+    <div className="flex flex-col items-center min-h-screen bg-gray-50">
+      {/* Hero Section - Updated styling */}
+      <header className="w-full py-24 px-4 bg-white">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-5xl font-bold mb-6 text-gray-900 tracking-tight">
+            Professional Invoicing<br />Made Simple
+          </h1>
+          <p className="text-xl mb-10 text-gray-600 max-w-2xl mx-auto">
+            Create, manage, and track invoices with ease. Get paid faster with our modern invoicing platform.
+          </p>
+          <div className="flex gap-4 justify-center">
+            {loading ? (
+              <div className="animate-pulse bg-gray-200 h-12 w-32 rounded-xl"></div>
+            ) : user ? (
+              <Link 
+                href="/dashboard" 
+                className="bg-[#273E4E] hover:bg-[#1F3240] text-white font-medium py-3 px-8 rounded-xl transition-colors duration-200"
+              >
+                Go to Dashboard
               </Link>
-              <Link href="/login" className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-xl transition-colors">
-                Log In
-              </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link 
+                  href="/signup" 
+                  className="bg-[#273E4E] hover:bg-[#1F3240] text-white font-medium py-3 px-8 rounded-xl transition-colors duration-200"
+                >
+                  Get Started
+                </Link>
+                <Link 
+                  href="/login" 
+                  className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-3 px-8 rounded-xl border border-gray-200 transition-colors duration-200"
+                >
+                  Log In
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Features Section */}
-      <section className="py-20 px-4 w-full bg-white">
+      {/* Features Section - Updated styling */}
+      <section className="py-24 px-4 w-full bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12">Powerful Features</h2>
+          <h2 className="text-3xl font-bold text-center mb-16 text-gray-900">Everything you need to manage invoices</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-blue-500 mb-4">
-                <FaFileInvoiceDollar size={32} />
+            {[
+              {
+                icon: <FaFileInvoiceDollar size={24} />,
+                title: "Easy Invoice Creation",
+                description: "Create professional invoices in minutes with our intuitive interface and customizable templates."
+              },
+              {
+                icon: <FaCreditCard size={24} />,
+                title: "Secure Payments",
+                description: "Accept payments online with integrated Stripe and PayPal support, all with bank-level security."
+              },
+              {
+                icon: <FaChartLine size={24} />,
+                title: "Analytics & Tracking",
+                description: "Monitor your business performance with real-time analytics and payment tracking features."
+              }
+            ].map((feature, index) => (
+              <div 
+                key={index} 
+                className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all duration-200"
+              >
+                <div className="text-[#273E4E] mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold mb-3 text-gray-900">{feature.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-bold mb-2">Easy Invoice Creation</h3>
-              <p className="text-gray-600">Create professional invoices in minutes with our intuitive interface and customizable templates.</p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-blue-500 mb-4">
-                <FaCreditCard size={32} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Secure Payments</h3>
-              <p className="text-gray-600">Accept payments online with integrated Stripe and PayPal support, all with bank-level security.</p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-blue-500 mb-4">
-                <FaChartLine size={32} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Real-time Analytics</h3>
-              <p className="text-gray-600">Track payments, monitor cash flow, and gain insights with detailed financial reports.</p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-blue-500 mb-4">
-                <FaPalette size={32} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Customizable Templates</h3>
-              <p className="text-gray-600">Choose from a variety of professional templates and customize them to match your brand.</p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-blue-500 mb-4">
-                <FaRegClock size={32} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Automated Reminders</h3>
-              <p className="text-gray-600">Set up automatic payment reminders and late payment notifications to improve cash flow.</p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-blue-500 mb-4">
-                <FaLock size={32} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Secure Storage</h3>
-              <p className="text-gray-600">All your invoices are securely stored in the cloud, accessible anytime, anywhere.</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-20 px-4 w-full bg-gray-50">
-        <h2 className="text-4xl font-bold text-center mb-12">Simple Pricing</h2>
-        <div className="flex flex-col md:flex-row gap-8 justify-center max-w-4xl mx-auto">
-          <div className="bg-white p-8 rounded-lg shadow-lg flex-1 max-w-md">
-            <h3 className="text-2xl font-bold mb-2">Free</h3>
-            <p className="text-gray-600 mb-4">Perfect for individuals and small businesses</p>
-            <p className="text-4xl font-bold mb-6">$0<span className="text-lg text-gray-600">/month</span></p>
-            <ul className="mb-8 space-y-2">
-              <li>✓ Up to 5 invoices per month</li>
-              <li>✓ Basic templates</li>
-              <li>✓ Email support</li>
-              <li>✓ Basic analytics</li>
-            </ul>
-            <Link href="/signup" className="block text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-              Get Started
-            </Link>
-          </div>
-
-          <div className="bg-white p-8 rounded-lg shadow-lg flex-1 max-w-md border-2 border-blue-500">
-            <div className="inline-block bg-blue-500 text-white px-3 py-1 rounded-full text-sm mb-4">MOST POPULAR</div>
-            <h3 className="text-2xl font-bold mb-2">Pro</h3>
-            <p className="text-gray-600 mb-4">For growing businesses</p>
-            <p className="text-4xl font-bold mb-6">$19.99<span className="text-lg text-gray-600">/month</span></p>
-            <ul className="mb-8 space-y-2">
-              <li>✓ Unlimited invoices</li>
-              <li>✓ Premium templates</li>
-              <li>✓ Priority support</li>
-              <li>✓ Advanced analytics</li>
-              <li>✓ Custom branding</li>
-              <li>✓ API access</li>
-            </ul>
-            <Link href="/signup" className="block text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-              Get Started
-            </Link>
-          </div>
+      {/* Pricing Section - Updated styling */}
+      <section className="py-24 px-4 w-full bg-white">
+        <h2 className="text-3xl font-bold text-center mb-16 text-gray-900">Simple, transparent pricing</h2>
+        <div className="flex flex-col md:flex-row gap-8 justify-center max-w-5xl mx-auto">
+          {[
+            {
+              name: "Free",
+              description: "Perfect for individuals and small businesses",
+              price: "0",
+              features: [
+                "Up to 5 invoices per month",
+                "Basic templates",
+                "Email support",
+                "Basic analytics"
+              ]
+            },
+            {
+              name: "Pro",
+              description: "For growing businesses",
+              price: "19.99",
+              popular: true,
+              features: [
+                "Unlimited invoices",
+                "Premium templates",
+                "Priority support",
+                "Advanced analytics",
+                "Custom branding",
+                "API access"
+              ]
+            }
+          ].map((plan, index) => (
+            <div 
+              key={index}
+              className={`bg-white p-8 rounded-xl ${
+                plan.popular 
+                  ? 'shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-[#273E4E] relative' 
+                  : 'shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
+              } flex-1 max-w-md`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                  <span className="bg-[#273E4E] text-white px-4 py-1 rounded-full text-sm">
+                    MOST POPULAR
+                  </span>
+                </div>
+              )}
+              <h3 className="text-xl font-bold mb-2 text-gray-900">{plan.name}</h3>
+              <p className="text-gray-600 mb-4 text-sm">{plan.description}</p>
+              <p className="text-3xl font-bold mb-6 text-gray-900">
+                ${plan.price}<span className="text-lg text-gray-500">/month</span>
+              </p>
+              <ul className="mb-8 space-y-3">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-center text-sm text-gray-600">
+                    <span className="mr-2 text-green-500">✓</span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link 
+                href="/signup" 
+                className={`block text-center py-2 px-4 rounded-xl transition-colors duration-200 ${
+                  plan.popular
+                    ? 'bg-[#273E4E] hover:bg-[#1F3240] text-white'
+                    : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200'
+                }`}
+              >
+                Get Started
+              </Link>
+            </div>
+          ))}
         </div>
       </section>
 
-      <footer className="w-full py-8 text-center text-gray-500 bg-white">
-        <p>&copy; 2024 Invoiz. All rights reserved.</p>
+      <footer className="w-full py-8 px-4 text-center text-gray-500 bg-white border-t border-gray-100">
+        <p className="text-sm">&copy; 2024 Invoiz. All rights reserved.</p>
       </footer>
     </div>
   );

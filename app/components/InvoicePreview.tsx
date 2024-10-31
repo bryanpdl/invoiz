@@ -35,86 +35,70 @@ const InvoicePreview = memo(function InvoicePreview({ invoice, showWatermark = f
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md relative">
-      {showPayNowButton && (
-        <button
-          onClick={handlePayNow}
-          className="absolute top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-        >
-          Pay Now
-        </button>
-      )}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">{invoice.businessName}</h2>
-        <p>Invoice Number: {invoice.invoiceNumber}</p>
-        <p>Date: {invoice.date}</p>
-        <p>Due Date: {invoice.dueDate}</p>
+    <div className="bg-white p-6 rounded-xl">
+      <div className="border-b border-gray-100 pb-6 mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">{invoice.businessName}</h2>
+        <p className="text-gray-500">Invoice #{invoice.invoiceNumber}</p>
       </div>
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Bill To:</h3>
-        <p>{invoice.clientName}</p>
-        <p>{invoice.clientEmail}</p>
+
+      <div className="grid grid-cols-2 gap-8 mb-8">
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Bill To:</h3>
+          <p className="text-gray-900 font-medium">{invoice.clientName}</p>
+          <p className="text-gray-600">{invoice.clientEmail}</p>
+        </div>
+        <div className="text-right">
+          <div className="mb-2">
+            <span className="text-sm text-gray-500">Date: </span>
+            <span className="text-gray-900">{invoice.date}</span>
+          </div>
+          <div>
+            <span className="text-sm text-gray-500">Due Date: </span>
+            <span className="text-gray-900">{invoice.dueDate}</span>
+          </div>
+        </div>
       </div>
-      <table className="w-full mb-6">
+
+      <table className="w-full mb-8">
         <thead>
-          <tr className="border-b">
-            <th className="text-left py-2">Description</th>
-            <th className="text-right py-2">Quantity</th>
-            <th className="text-right py-2">Price</th>
-            <th className="text-right py-2">Total</th>
+          <tr className="border-b border-gray-100">
+            <th className="text-left py-3 text-gray-500 font-medium">Description</th>
+            <th className="text-right py-3 text-gray-500 font-medium">Qty</th>
+            <th className="text-right py-3 text-gray-500 font-medium">Price</th>
+            <th className="text-right py-3 text-gray-500 font-medium">Total</th>
           </tr>
         </thead>
         <tbody>
           {invoice.items.map((item, index) => (
-            <tr key={index} className="border-b">
-              <td className="py-2">{item.description}</td>
-              <td className="text-right py-2">{item.quantity}</td>
-              <td className="text-right py-2">${item.price.toFixed(2)}</td>
-              <td className="text-right py-2">${(item.quantity * item.price).toFixed(2)}</td>
+            <tr key={index} className="border-b border-gray-50">
+              <td className="py-3 text-gray-900">{item.description}</td>
+              <td className="py-3 text-right text-gray-600">{item.quantity}</td>
+              <td className="py-3 text-right text-gray-600">${item.price.toFixed(2)}</td>
+              <td className="py-3 text-right text-gray-900">${(item.quantity * item.price).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="flex justify-end">
-        <div className="w-1/2">
-          <div className="flex justify-between mb-2">
-            <span>Subtotal:</span>
-            <span>${invoice.subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between mb-2">
-            <span>Tax ({invoice.taxRate}%):</span>
-            <span>${invoice.taxAmount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold">
-            <span>Total:</span>
-            <span>${invoice.total.toFixed(2)}</span>
-          </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <div className="flex justify-between mb-2">
+          <span className="text-gray-500">Subtotal:</span>
+          <span className="text-gray-900">${invoice.subtotal.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-gray-500">Tax ({invoice.taxRate}%):</span>
+          <span className="text-gray-900">${invoice.taxAmount.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between font-bold text-lg">
+          <span>Total:</span>
+          <span>${invoice.total.toFixed(2)}</span>
         </div>
       </div>
+
       {invoice.notes && (
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold mb-2">Notes:</h3>
-          <p>{invoice.notes}</p>
-        </div>
-      )}
-      <div className="mt-6">
-        <h3 className="text-xl font-semibold mb-2">Payment Terms:</h3>
-        {invoice.paymentTerms.bankTransfer && (
-          <p>Bank Transfer: {invoice.paymentTerms.bankTransfer}</p>
-        )}
-        {invoice.paymentTerms.creditCard.length > 0 && (
-          <p>Credit Cards Accepted: {invoice.paymentTerms.creditCard.join(', ')}</p>
-        )}
-        {invoice.paymentTerms.paypal && (
-          <p>PayPal: {invoice.paymentTerms.paypal}</p>
-        )}
-        {invoice.paymentTerms.lateFeePercentage !== null && (
-          <p>Late Fee: {invoice.paymentTerms.lateFeePercentage}%</p>
-        )}
-      </div>
-      {showWatermark && (
-        <div className="absolute bottom-4 right-4 text-gray-400 text-sm">
-          Created with InvoiceGen
+        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-500 mb-2">Notes:</h4>
+          <p className="text-gray-600">{invoice.notes}</p>
         </div>
       )}
     </div>

@@ -92,26 +92,34 @@ export default function CreateInvoice() {
 
   return (
     <ProtectedRoute>
-      <div className="flex flex-col min-h-screen">
-        <nav className="bg-gray-800 text-white p-4">
-          <Link href="/dashboard" className="text-white hover:underline">
-            ← Back to Dashboard
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <nav className="border-b border-gray-100 px-8 py-4 bg-white">
+          <Link 
+            href="/dashboard" 
+            className="text-gray-600 hover:text-gray-800 flex items-center"
+          >
+            <span className="mr-2">←</span>
+            Back to Dashboard
           </Link>
         </nav>
-        <div className="flex flex-col md:flex-row flex-grow">
-          <div className="w-full md:w-1/2 p-8">
-            <h1 className="text-3xl font-bold mb-6">Create Invoice</h1>
-            <InvoiceForm 
-              invoice={invoice} 
-              onInvoiceChange={handleInvoiceChange} 
-              onGeneratePDF={handleGeneratePDF}
-              onGenerateLink={handleGenerateLink}
-              onSaveInvoice={handleSaveInvoice}
-            />
+        <div className="flex flex-col md:flex-row flex-grow p-8 gap-8 max-w-7xl mx-auto w-full">
+          <div className="w-full md:w-1/2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Invoice</h1>
+            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+              <InvoiceForm 
+                invoice={invoice} 
+                onInvoiceChange={handleInvoiceChange} 
+                onGeneratePDF={handleGeneratePDF}
+                onGenerateLink={handleGenerateLink}
+                onSaveInvoice={handleSaveInvoice}
+              />
+            </div>
           </div>
-          <div className="w-full md:w-1/2 p-8 bg-gray-100">
-            <h2 className="text-2xl font-bold mb-4">Preview</h2>
-            <InvoicePreview invoice={invoice} />
+          <div className="w-full md:w-1/2">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Preview</h2>
+            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+              <InvoicePreview invoice={invoice} />
+            </div>
           </div>
         </div>
       </div>

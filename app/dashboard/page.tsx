@@ -22,6 +22,7 @@ import {
 import Image from 'next/image';
 import QuickMenu from '../components/QuickMenu';
 import InvoiceControls from '../components/InvoiceControls';
+import ClientPanel from '../components/ClientPanel';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -32,9 +33,13 @@ export default function Dashboard() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending'>('all');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [sortConfig, setSortConfig] = useState({ field: 'date', direction: 'desc' as 'asc' | 'desc' });
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+  const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' }>({
+    field: 'date',
+    direction: 'desc'
+  });
+  const [activeSection, setActiveSection] = useState<'invoices' | 'clients'>('invoices');
 
   useEffect(() => {
     if (user) {
@@ -128,7 +133,7 @@ export default function Dashboard() {
   const applyFilters = () => {
     let filtered = [...invoices];
 
-    // Apply search
+    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(invoice => 
         invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -143,12 +148,14 @@ export default function Dashboard() {
       );
     }
 
-    // Apply date filter
+    // Apply date filter with proper null checking and type narrowing
     if (dateRange.start && dateRange.end) {
       filtered = filtered.filter(invoice => {
-        const invoiceDate = new Date(invoice.date);
-        return invoiceDate >= new Date(dateRange.start) && 
-               invoiceDate <= new Date(dateRange.end);
+        const invoiceDate = new Date(invoice.date).getTime();
+        const startTime = dateRange.start.getTime();
+        const endTime = dateRange.end.getTime();
+        
+        return invoiceDate >= startTime && invoiceDate <= endTime;
       });
     }
 
@@ -174,63 +181,75 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen bg-gray-50">
-        <nav className="bg-gray-800 text-white p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+        <nav className="border-b border-gray-100 px-8 py-4 flex justify-between items-center bg-white">
+          <div className="flex items-center space-x-8">
+            <button
+              onClick={() => setActiveSection('invoices')}
+              className={`text-xl font-semibold ${
+                activeSection === 'invoices' 
+                  ? 'text-gray-800' 
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              My Invoices
+            </button>
+            <button
+              onClick={() => setActiveSection('clients')}
+              className={`text-xl font-semibold ${
+                activeSection === 'clients' 
+                  ? 'text-gray-800' 
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              Clients
+            </button>
+          </div>
+          
           <div className="flex items-center gap-4">
-            
-            
-            {/* User Avatar Dropdown */}
-            <div className="relative flex items-center">
+            <div className="relative">
               <button
                 id="user-avatar"
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="focus:outline-none"
-                aria-label="User menu"
               >
                 <UserAvatar />
               </button>
 
-              {/* Dropdown Menu */}
               {showUserMenu && (
-                <div
-                  id="user-dropdown"
-                  className="absolute right-0 mt-40 w-48 bg-white rounded-md shadow-lg py-1 z-10"
-                >
-                  {/* User Info */}
-                  <div className="px-4 py-2 border-b">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1">
+                  <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">{user?.displayName || 'User'}</p>
                     <p className="text-sm text-gray-500 truncate">{user?.email}</p>
                   </div>
 
-                  {/* Menu Items */}
                   <Link
                     href="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <FaCog className="mr-3" />
+                    <FaCog className="mr-3 text-gray-400" />
                     Settings
                   </Link>
 
                   <Link
                     href="/billing"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <FaMoneyBillWave className="mr-3" />
+                    <FaMoneyBillWave className="mr-3 text-gray-400" />
                     Billing & Plan
                   </Link>
 
                   <Link
                     href="/payment-methods"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <FaCreditCard className="mr-3" />
+                    <FaCreditCard className="mr-3 text-gray-400" />
                     Payment Methods
                   </Link>
 
-                  <div className="border-t">
+                  <div className="border-t border-gray-100">
                     <button
                       onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
                       <FaSignOutAlt className="mr-3" />
                       Sign Out
@@ -242,136 +261,148 @@ export default function Dashboard() {
           </div>
         </nav>
 
-        <div className="flex-grow p-8">
-          {/* Analytics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-2">
-                <FaFileInvoice className="text-blue-500 mr-2" />
-                <h3 className="font-semibold text-gray-600">Total Invoices</h3>
-              </div>
-              <p className="text-2xl font-bold">{invoices.length}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-2">
-                <FaMoneyBillWave className="text-green-500 mr-2" />
-                <h3 className="font-semibold text-gray-600">Total Revenue</h3>
-              </div>
-              <p className="text-2xl font-bold">${getTotalRevenue()}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-2">
-                <FaChartLine className="text-purple-500 mr-2" />
-                <h3 className="font-semibold text-gray-600">Pending Invoices</h3>
-              </div>
-              <p className="text-2xl font-bold">{getPendingInvoices()}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-2">
-                <FaClock className="text-orange-500 mr-2" />
-                <h3 className="font-semibold text-gray-600">Active Reminders</h3>
-              </div>
-              <p className="text-2xl font-bold">0</p>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="mb-6">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('invoices')}
-                  className={`${
-                    activeTab === 'invoices'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium`}
-                >
-                  Invoices
-                </button>
-                <button
-                  onClick={() => setActiveTab('reminders')}
-                  className={`${
-                    activeTab === 'reminders'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium`}
-                >
-                  Payment Reminders
-                </button>
-              </nav>
-            </div>
-          </div>
-
-          {/* Add InvoiceControls before the content section */}
-          {activeTab === 'invoices' && (
-            <InvoiceControls
-              onSearch={setSearchQuery}
-              onFilterStatus={setStatusFilter}
-              onFilterDate={(start, end) => setDateRange({ start, end })}
-              onSort={(field, direction) => setSortConfig({ field, direction })}
-            />
-          )}
-
-          {/* Content */}
-          {activeTab === 'invoices' ? (
-            loading ? (
-              <p>Loading invoices...</p>
-            ) : filteredInvoices.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredInvoices.map((invoice) => (
-                  <div key={invoice.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-bold text-lg">{invoice.invoiceNumber}</h3>
-                        <p className="text-gray-600">Client: {invoice.clientName}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        invoice.paid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {invoice.paid ? 'Paid' : 'Pending'}
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-gray-600">Date: {invoice.date}</p>
-                      <p className="text-gray-600">Due: {invoice.dueDate}</p>
-                      <p className="font-bold text-lg">Total: ${(invoice.total || 0).toFixed(2)}</p>
-                    </div>
-                    <div className="mt-4 flex justify-between items-center pt-4 border-t">
-                      <Link href={`/edit-invoice/${invoice.id}`} className="text-blue-500 hover:text-blue-600 font-medium">
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteInvoice(invoice.id!)}
-                        className="text-red-500 hover:text-red-600 font-medium"
-                      >
-                        Delete
-                      </button>
-                    </div>
+        <div className="flex-grow p-8 max-w-7xl mx-auto w-full">
+          {activeSection === 'invoices' ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <FaFileInvoice className="text-blue-500 mr-2" />
+                    <h3 className="font-medium text-gray-600">Total Invoices</h3>
                   </div>
-                ))}
+                  <p className="text-2xl font-semibold text-gray-900">{invoices.length}</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <FaMoneyBillWave className="text-green-500 mr-2" />
+                    <h3 className="font-medium text-gray-600">Total Revenue</h3>
+                  </div>
+                  <p className="text-2xl font-semibold text-gray-900">${getTotalRevenue()}</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <FaChartLine className="text-purple-500 mr-2" />
+                    <h3 className="font-medium text-gray-600">Pending Invoices</h3>
+                  </div>
+                  <p className="text-2xl font-semibold text-gray-900">{getPendingInvoices()}</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <FaClock className="text-orange-500 mr-2" />
+                    <h3 className="font-medium text-gray-600">Active Reminders</h3>
+                  </div>
+                  <p className="text-2xl font-semibold text-gray-900">0</p>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600 mb-4">No invoices found. Create your first invoice!</p>
-                <Link href="/create-invoice" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                  <FaFileInvoice className="mr-2" />
-                  Create New Invoice
-                </Link>
+
+              <InvoiceControls
+                onSearch={(query) => setSearchQuery(query)}
+                onFilterStatus={(status) => setStatusFilter(status)}
+                onFilterDate={(start, end) => setDateRange({ start, end })}
+                onSort={(field, direction) => setSortConfig({ field, direction })}
+              />
+
+              <div className="mb-6">
+                <div className="border-b border-gray-100">
+                  <nav className="-mb-px flex space-x-8">
+                    <button
+                      onClick={() => setActiveTab('invoices')}
+                      className={`${
+                        activeTab === 'invoices'
+                          ? 'border-gray-800 text-gray-800'
+                          : 'border-transparent text-gray-400 hover:text-gray-600'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    >
+                      Invoices
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('reminders')}
+                      className={`${
+                        activeTab === 'reminders'
+                          ? 'border-gray-800 text-gray-800'
+                          : 'border-transparent text-gray-400 hover:text-gray-600'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    >
+                      Payment Reminders
+                    </button>
+                  </nav>
+                </div>
               </div>
-            )
+
+              {activeTab === 'invoices' ? (
+                loading ? (
+                  <p className="text-gray-500">Loading invoices...</p>
+                ) : filteredInvoices.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredInvoices.map((invoice) => (
+                      <div 
+                        key={invoice.id} 
+                        className="bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all"
+                      >
+                        <div className="p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="font-medium text-gray-900">{invoice.invoiceNumber}</h3>
+                              <p className="text-gray-500 text-sm">Client: {invoice.clientName}</p>
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                              invoice.paid 
+                                ? 'bg-green-50 text-green-700' 
+                                : 'bg-yellow-50 text-yellow-700'
+                            }`}>
+                              {invoice.paid ? 'Paid' : 'Pending'}
+                            </span>
+                          </div>
+                          <div className="space-y-2 text-sm text-gray-500">
+                            <p>Date: {invoice.date}</p>
+                            <p>Due: {invoice.dueDate}</p>
+                            <p className="text-gray-900 font-medium">${(invoice.total || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
+                            <Link 
+                              href={`/edit-invoice/${invoice.id}`} 
+                              className="text-gray-600 hover:text-gray-800 text-sm font-medium rounded-lg px-3 py-1 hover:bg-gray-50 transition-colors"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteInvoice(invoice.id!)}
+                              className="text-gray-400 hover:text-red-600 text-sm font-medium rounded-lg px-3 py-1 hover:bg-red-50 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-8">
+                    <p className="text-gray-500 mb-4">No invoices found. Create your first invoice!</p>
+                    <Link href="/create-invoice" className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors">
+                      <FaFileInvoice className="mr-2" />
+                      Create New Invoice
+                    </Link>
+                  </div>
+                )
+              ) : (
+                <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-8">
+                  <div className="text-center py-8">
+                    <FaClock className="mx-auto text-gray-400 text-4xl mb-4" />
+                    <h3 className="text-xl font-bold mb-2">Automated Payment Reminders</h3>
+                    <p className="text-gray-600 mb-4">Set up automatic reminders for your pending invoices</p>
+                    <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled>
+                      Configure Reminders (Coming Soon)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
-            // Reminders Tab Content
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-center py-8">
-                <FaClock className="mx-auto text-gray-400 text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-2">Automated Payment Reminders</h3>
-                <p className="text-gray-600 mb-4">Set up automatic reminders for your pending invoices</p>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled>
-                  Configure Reminders (Coming Soon)
-                </button>
-              </div>
-            </div>
+            <ClientPanel invoices={invoices} />
           )}
         </div>
 

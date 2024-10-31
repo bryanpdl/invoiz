@@ -170,72 +170,75 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
   };
 
   return (
-    <form className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+    <form className="space-y-6">
       <h2 className="text-2xl font-bold mb-6">Invoice Details</h2>
       
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">Business Name</label>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Business Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
-            id="businessName"
             name="businessName"
-            value={invoice.businessName || ''}
+            value={invoice.businessName}
             onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            placeholder="Business Name"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
           />
-        </div>
-        <div>
-          <label htmlFor="clientName" className="block text-sm font-medium text-gray-700">Client Name</label>
           <input
             type="text"
-            id="clientName"
-            name="clientName"
-            value={invoice.clientName}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label htmlFor="invoiceNumber" className="block text-sm font-medium text-gray-700">Invoice Number</label>
-          <input
-            type="text"
-            id="invoiceNumber"
             name="invoiceNumber"
             value={invoice.invoiceNumber}
             onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700">Invoice Date</label>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            value={invoice.date}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">Due Date</label>
-          <input
-            type="date"
-            id="dueDate"
-            name="dueDate"
-            value={invoice.dueDate}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            placeholder="Invoice Number"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
           />
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-700 mb-2">Items</h3>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Client Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            name="clientName"
+            value={invoice.clientName}
+            onChange={handleInputChange}
+            placeholder="Client Name"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+          />
+          <input
+            type="email"
+            name="clientEmail"
+            value={invoice.clientEmail}
+            onChange={handleInputChange}
+            placeholder="Client Email"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Dates</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="date"
+            name="date"
+            value={invoice.date}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+          />
+          <input
+            type="date"
+            name="dueDate"
+            value={invoice.dueDate}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Items</h3>
         {invoice.items.map((item, index) => (
           <div key={index} className="flex items-center space-x-2 mb-2">
             <input
@@ -507,25 +510,25 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
         />
       )}
 
-      <div className="flex space-x-4">
+      <div className="flex flex-wrap gap-4">
         <button
           type="button"
           onClick={onGeneratePDF}
-          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+          className="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors duration-200"
         >
           Export PDF
         </button>
         <button
           type="button"
           onClick={onGenerateLink}
-          className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+          className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors duration-200"
         >
           Generate Link
         </button>
         <button
           type="button"
           onClick={onSaveInvoice}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className="px-4 py-2 bg-[#273E4E] text-white rounded-xl hover:bg-[#1F3240] transition-colors duration-200"
         >
           Save Invoice
         </button>
