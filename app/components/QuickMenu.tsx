@@ -1,77 +1,71 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  FaPlus, 
-  FaFileInvoice, 
-  FaUserPlus, 
-  FaLink,
-  FaTimes
-} from 'react-icons/fa';
+import Link from 'next/link';
+import { FaPlus, FaFileInvoice, FaUserPlus, FaChartLine, FaFileExport } from 'react-icons/fa';
+import AddClientModal from './AddClientModal'; // We'll create this next
 
 export default function QuickMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const menuItems = [
-    {
-      icon: <FaFileInvoice size={20} />,
-      label: 'New Invoice',
-      action: () => router.push('/create-invoice'),
-    },
-    {
-      icon: <FaUserPlus size={20} />,
-      label: 'Add Client',
-      action: () => router.push('/clients/new'),
-    },
-    {
-      icon: <FaLink size={20} />,
-      label: 'Payment Link',
-      action: () => router.push('/payment-links'),
-    },
-  ];
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
-      {/* Menu Items */}
-      <div className={`absolute bottom-16 right-0 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'} transition-all duration-200`}>
-        <div className="flex flex-col-reverse gap-3 items-end mb-4">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                item.action();
-                setIsOpen(false);
-              }}
-              className="flex items-center justify-end bg-white text-gray-700 px-4 py-2 rounded-lg shadow-sm border border-gray-100 hover:border-gray-200 transition-all duration-200 group"
-            >
-              <span className="text-sm font-medium w-0 overflow-hidden group-hover:w-auto group-hover:mr-3 transition-all duration-200 whitespace-nowrap">
-                {item.label}
-              </span>
-              <span className="text-gray-500 group-hover:text-gray-700 transition-colors">
-                {item.icon}
-              </span>
-            </button>
-          ))}
+    <>
+      <div className="fixed bottom-8 right-8" data-testid="quick-menu">
+        <div className="relative">
+          {isOpen && (
+            <div className="absolute bottom-16 right-0 mb-2 flex flex-col gap-2">
+              <Link
+                href="/create-invoice"
+                className="flex items-center bg-white text-gray-700 px-4 py-2 rounded-xl shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <FaFileInvoice className="mr-2" />
+                New Invoice
+              </Link>
+              <button
+                onClick={() => setShowAddClientModal(true)}
+                data-testid="add-client-button"
+                className="flex items-center bg-white text-gray-700 px-4 py-2 rounded-xl shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <FaUserPlus className="mr-2" />
+                Add Client
+              </button>
+              <button
+                onClick={() => {/* Export functionality */}}
+                className="flex items-center bg-white text-gray-700 px-4 py-2 rounded-xl shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <FaFileExport className="mr-2" />
+                Export Data
+              </button>
+              <Link
+                href="/analytics"
+                className="flex items-center bg-white text-gray-700 px-4 py-2 rounded-xl shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <FaChartLine className="mr-2" />
+                Analytics
+              </Link>
+            </div>
+          )}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`bg-[#273E4E] text-white p-4 rounded-full shadow-lg hover:bg-[#1F3240] transition-colors ${
+              isOpen ? 'rotate-45' : ''
+            } transform transition-transform duration-200`}
+          >
+            <FaPlus className="text-xl" />
+          </button>
         </div>
       </div>
 
-      {/* Toggle Button */}
-      <button
-        onClick={toggleMenu}
-        className={`p-4 rounded-lg shadow-sm border border-gray-100 transition-all duration-200 ${
-          isOpen 
-            ? 'bg-white text-red-500 hover:border-red-100' 
-            : 'bg-white text-blue-500 hover:border-blue-100'
-        }`}
-      >
-        {isOpen ? <FaTimes size={24} /> : <FaPlus size={24} />}
-      </button>
-    </div>
+      {showAddClientModal && (
+        <AddClientModal
+          onClose={() => setShowAddClientModal(false)}
+          onClientAdded={() => {
+            setShowAddClientModal(false);
+            setIsOpen(false);
+          }}
+        />
+      )}
+    </>
   );
 }

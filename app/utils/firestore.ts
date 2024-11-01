@@ -47,11 +47,17 @@ export async function getInvoice(id: string): Promise<Invoice> {
   }
 }
 
-export async function updateInvoice(id: string, invoice: Partial<Invoice>) {
+export async function updateInvoice(invoice: Invoice) {
   try {
-    const docRef = doc(db, 'invoices', id);
+    if (!invoice.id) {
+      throw new Error('Invoice ID is required for update');
+    }
+    
+    const docRef = doc(db, 'invoices', invoice.id);
+    const { id, ...updateData } = invoice;
+    
     await updateDoc(docRef, {
-      ...invoice,
+      ...updateData,
       updatedAt: serverTimestamp(),
     });
   } catch (error) {

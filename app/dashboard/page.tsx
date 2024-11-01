@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getInvoices, deleteInvoice } from '../utils/firestore';
+import { getInvoices, deleteInvoice, updateInvoice } from '../utils/firestore';
 import { Invoice } from '../types/invoice';
 import { 
   FaChartLine, 
@@ -17,12 +17,25 @@ import {
   FaCog, 
   FaSignOutAlt, 
   FaUser,
-  FaCreditCard 
+  FaCreditCard,
+  FaBell,
+  FaEnvelope,
+  FaToggleOn,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import Image from 'next/image';
 import QuickMenu from '../components/QuickMenu';
 import InvoiceControls from '../components/InvoiceControls';
 import ClientPanel from '../components/ClientPanel';
+import { Switch } from '@headlessui/react';
+
+interface ReminderItem {
+  type: 'beforeDue' | 'onDue' | 'afterDue';
+  clientName: string;
+  invoiceNumber: string;
+  amount: number;
+  date: string;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -46,6 +59,15 @@ export default function Dashboard() {
     direction: 'desc'
   });
   const [activeSection, setActiveSection] = useState<'invoices' | 'clients'>('invoices');
+  const [reminderSettings, setReminderSettings] = useState({
+    enabled: false,
+    beforeDue: true,
+    onDue: true,
+    afterDue: true,
+    emailEnabled: true,
+    daysBeforeDue: 3,
+    reminderFrequency: 7, // days between reminders after due
+  });
 
   useEffect(() => {
     if (user) {
@@ -88,6 +110,13 @@ export default function Dashboard() {
 
   const getTotalRevenue = () => {
     return invoices.reduce((sum, invoice) => sum + (invoice.total || 0), 0).toFixed(2);
+  };
+
+  const getTotalPaid = () => {
+    return invoices
+      .filter(invoice => invoice.paid)
+      .reduce((sum, invoice) => sum + (invoice.total || 0), 0)
+      .toFixed(2);
   };
 
   const getPendingInvoices = () => {
@@ -182,6 +211,85 @@ export default function Dashboard() {
     });
 
     setFilteredInvoices(filtered);
+  };
+
+  const handleTogglePaymentStatus = async (invoice: Invoice) => {
+    try {
+      const updatedInvoice = {
+        ...invoice,
+        paid: !invoice.paid,
+        // If being marked as paid, set the payment date to today
+        date: invoice.paid ? invoice.date : new Date().toISOString().split('T')[0]
+      };
+
+      await updateInvoice(updatedInvoice);
+      
+      // Update local state
+      setInvoices(prevInvoices => 
+        prevInvoices.map(inv => 
+          inv.id === invoice.id ? updatedInvoice : inv
+        )
+      );
+
+      // Update filtered invoices
+      setFilteredInvoices(prevFiltered =>
+        prevFiltered.map(inv =>
+          inv.id === invoice.id ? updatedInvoice : inv
+        )
+      );
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    }
+  };
+
+  const getNextReminderDate = () => {
+    const upcomingReminders = filteredInvoices.filter(inv => !inv.paid && new Date(inv.dueDate) > new Date());
+    if (upcomingReminders.length > 0) {
+      const nextReminder = upcomingReminders[0];
+      return nextReminder.dueDate;
+    }
+    return 'No upcoming reminders';
+  };
+
+  const getUpcomingReminders = (): ReminderItem[] => {
+    const today = new Date();
+    return filteredInvoices
+      .filter(inv => !inv.paid)
+      .map(inv => {
+        const dueDate = new Date(inv.dueDate);
+        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        let type: 'beforeDue' | 'onDue' | 'afterDue';
+        if (daysUntilDue < 0) {
+          type = 'afterDue';
+        } else if (daysUntilDue === 0) {
+          type = 'onDue';
+        } else {
+          type = 'beforeDue';
+        }
+
+        return {
+          type,
+          clientName: inv.clientName,
+          invoiceNumber: inv.invoiceNumber,
+          amount: inv.total,
+          date: inv.dueDate,
+        };
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
+  const getReminderStatusColor = (type: string) => {
+    switch (type) {
+      case 'beforeDue':
+        return 'bg-blue-500';
+      case 'onDue':
+        return 'bg-green-500';
+      case 'afterDue':
+        return 'bg-yellow-500';
+      default:
+        return '';
+    }
   };
 
   return (
@@ -289,18 +397,21 @@ export default function Dashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
                   <div className="flex items-center mb-2">
-                    <FaChartLine className="text-purple-500 mr-2" />
-                    <h3 className="font-medium text-gray-600">Pending Invoices</h3>
+                    <FaCreditCard className="text-blue-500 mr-2" />
+                    <h3 className="font-medium text-gray-600">Total Paid</h3>
                   </div>
-                  <p className="text-2xl font-semibold text-gray-900">{getPendingInvoices()}</p>
+                  <p className="text-2xl font-semibold text-gray-900">${getTotalPaid()}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {((Number(getTotalPaid()) / Number(getTotalRevenue())) * 100).toFixed(1)}% of total revenue
+                  </p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
                   <div className="flex items-center mb-2">
                     <FaClock className="text-orange-500 mr-2" />
-                    <h3 className="font-medium text-gray-600">Active Reminders</h3>
+                    <h3 className="font-medium text-gray-600">Pending Invoices</h3>
                   </div>
-                  <p className="text-2xl font-semibold text-gray-900">0</p>
+                  <p className="text-2xl font-semibold text-gray-900">{getPendingInvoices()}</p>
                 </div>
               </div>
 
@@ -354,13 +465,16 @@ export default function Dashboard() {
                               <h3 className="font-medium text-gray-900">{invoice.invoiceNumber}</h3>
                               <p className="text-gray-500 text-sm">Client: {invoice.clientName}</p>
                             </div>
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                              invoice.paid 
-                                ? 'bg-green-50 text-green-700' 
-                                : 'bg-yellow-50 text-yellow-700'
-                            }`}>
+                            <button
+                              onClick={() => handleTogglePaymentStatus(invoice)}
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                invoice.paid 
+                                  ? 'bg-green-50 text-green-700 hover:bg-green-100' 
+                                  : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+                              }`}
+                            >
                               {invoice.paid ? 'Paid' : 'Pending'}
-                            </span>
+                            </button>
                           </div>
                           <div className="space-y-2 text-sm text-gray-500">
                             <p>Date: {invoice.date}</p>
@@ -395,14 +509,176 @@ export default function Dashboard() {
                   </div>
                 )
               ) : (
-                <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-8">
-                  <div className="text-center py-8">
-                    <FaClock className="mx-auto text-gray-400 text-4xl mb-4" />
-                    <h3 className="text-xl font-bold mb-2">Automated Payment Reminders</h3>
-                    <p className="text-gray-600 mb-4">Set up automatic reminders for your pending invoices</p>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled>
-                      Configure Reminders (Coming Soon)
-                    </button>
+                <div className="space-y-6">
+                  {/* Overview Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+                      <div className="flex items-center mb-2">
+                        <FaBell className="text-orange-500 mr-2" />
+                        <h3 className="font-medium text-gray-600">Pending Reminders</h3>
+                      </div>
+                      <p className="text-2xl font-semibold text-gray-900">
+                        {filteredInvoices.filter(inv => !inv.paid && new Date(inv.dueDate) > new Date()).length}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+                      <div className="flex items-center mb-2">
+                        <FaClock className="text-red-500 mr-2" />
+                        <h3 className="font-medium text-gray-600">Overdue Invoices</h3>
+                      </div>
+                      <p className="text-2xl font-semibold text-gray-900">
+                        {filteredInvoices.filter(inv => !inv.paid && new Date(inv.dueDate) < new Date()).length}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+                      <div className="flex items-center mb-2">
+                        <FaCalendarAlt className="text-green-500 mr-2" />
+                        <h3 className="font-medium text-gray-600">Next Reminder</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {getNextReminderDate()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Reminder Settings */}
+                  <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold">Reminder Settings</h3>
+                      <Switch
+                        checked={reminderSettings.enabled}
+                        onChange={(checked) => setReminderSettings(prev => ({ ...prev, enabled: checked }))}
+                        className={`${
+                          reminderSettings.enabled ? 'bg-[#273E4E]' : 'bg-gray-200'
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+                      >
+                        <span className="sr-only">Enable automatic reminders</span>
+                        <span
+                          className={`${
+                            reminderSettings.enabled ? 'translate-x-6' : 'translate-x-1'
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </Switch>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Reminder Timing */}
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-700">Reminder Schedule</h4>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={reminderSettings.beforeDue}
+                              onChange={(e) => setReminderSettings(prev => ({ ...prev, beforeDue: e.target.checked }))}
+                              className="rounded text-[#273E4E] focus:ring-[#273E4E]"
+                            />
+                            <span className="text-gray-600">Send reminder before due date</span>
+                          </div>
+                          {reminderSettings.beforeDue && (
+                            <div className="ml-6">
+                              <input
+                                type="number"
+                                min="1"
+                                max="30"
+                                value={reminderSettings.daysBeforeDue}
+                                onChange={(e) => setReminderSettings(prev => ({ ...prev, daysBeforeDue: parseInt(e.target.value) }))}
+                                className="w-20 px-3 py-1 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273E4E]"
+                              />
+                              <span className="ml-2 text-gray-600">days before</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={reminderSettings.onDue}
+                              onChange={(e) => setReminderSettings(prev => ({ ...prev, onDue: e.target.checked }))}
+                              className="rounded text-[#273E4E] focus:ring-[#273E4E]"
+                            />
+                            <span className="text-gray-600">Send reminder on due date</span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={reminderSettings.afterDue}
+                              onChange={(e) => setReminderSettings(prev => ({ ...prev, afterDue: e.target.checked }))}
+                              className="rounded text-[#273E4E] focus:ring-[#273E4E]"
+                            />
+                            <span className="text-gray-600">Send reminders after due date</span>
+                          </div>
+                          {reminderSettings.afterDue && (
+                            <div className="ml-6">
+                              <span className="text-gray-600">Repeat every</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max="30"
+                                value={reminderSettings.reminderFrequency}
+                                onChange={(e) => setReminderSettings(prev => ({ ...prev, reminderFrequency: parseInt(e.target.value) }))}
+                                className="mx-2 w-20 px-3 py-1 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273E4E]"
+                              />
+                              <span className="text-gray-600">days until paid</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Notification Settings */}
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-700">Notification Settings</h4>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={reminderSettings.emailEnabled}
+                              onChange={(e) => setReminderSettings(prev => ({ ...prev, emailEnabled: e.target.checked }))}
+                              className="rounded text-[#273E4E] focus:ring-[#273E4E]"
+                            />
+                            <span className="text-gray-600">Send email notifications</span>
+                          </div>
+                          <div className="p-4 bg-gray-50 rounded-lg">
+                            <h5 className="font-medium text-gray-700 mb-2">Email Preview</h5>
+                            <div className="text-sm text-gray-600">
+                              Subject: Invoice #[Number] Payment Reminder
+                              <br />
+                              Dear [Client Name],
+                              <br />
+                              This is a friendly reminder that invoice #[Number] for [Amount] is due on [Date].
+                              <br />
+                              <button className="text-[#273E4E] hover:underline mt-2">
+                                Customize template →
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Upcoming Reminders */}
+                  <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+                    <h3 className="text-lg font-semibold mb-4">Upcoming Reminders</h3>
+                    <div className="space-y-4">
+                      {getUpcomingReminders().map((reminder, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-2 rounded-full ${getReminderStatusColor(reminder.type)}`}>
+                              <FaEnvelope className="text-white" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{reminder.clientName}</p>
+                              <p className="text-sm text-gray-500">Invoice #{reminder.invoiceNumber}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900">${reminder.amount}</p>
+                            <p className="text-sm text-gray-500">{reminder.date}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

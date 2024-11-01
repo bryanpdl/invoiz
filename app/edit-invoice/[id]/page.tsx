@@ -57,7 +57,11 @@ export default function EditInvoice({ params }: { params: { id: string } }) {
     setSaveError(null);
 
     try {
-      await updateInvoice(params.id, invoice);
+      const updatedInvoice = {
+        ...invoice,
+        id: params.id
+      };
+      await updateInvoice(updatedInvoice);
       alert('Invoice updated successfully!');
       router.push('/dashboard');
     } catch (error) {

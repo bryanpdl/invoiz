@@ -5,6 +5,9 @@ import { useAuth } from '../hooks/useAuth';
 import PaymentIntegrationModal from './PaymentIntegrationModal';
 import { useRouter } from 'next/navigation';
 import { getConnectedPaymentProvider } from '../utils/paymentProviders';
+import { db } from '../firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { Client } from '../types/client';
 
 interface InvoiceFormProps {
   invoice: Invoice;
@@ -23,6 +26,12 @@ const creditCardOptions = [
   'Diners Club',
 ];
 
+interface ClientSuggestion {
+  company: string;
+  email: string;
+  name?: string;
+}
+
 export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, onSaveInvoice, onGenerateLink }: InvoiceFormProps) {
   const [newItem, setNewItem] = useState<InvoiceItem>({ description: '', quantity: 1, price: 0 });
   const [editingPrices, setEditingPrices] = useState<{ [key: number]: string }>({});
@@ -31,6 +40,9 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [connectedProvider, setConnectedProvider] = useState<{ provider: string; accountId: string } | null>(null);
   const router = useRouter();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [clientSuggestions, setClientSuggestions] = useState<ClientSuggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     calculateTotals();
@@ -169,6 +181,56 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
     setShowPaymentModal(true);
   };
 
+  const fetchClientSuggestions = async (companyName: string) => {
+    if (!user || !companyName.trim()) {
+      setClientSuggestions([]);
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    try {
+      // First get clients from Firestore
+      const clientsRef = collection(db, 'clients');
+      const q = query(
+        clientsRef, 
+        where('userId', '==', user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      const clients = querySnapshot.docs.map(doc => doc.data() as Client);
+      
+      // Filter clients based on company name (case-insensitive partial match)
+      const filteredClients = clients.filter(client => 
+        client.company.toLowerCase().includes(companyName.toLowerCase())
+      );
+
+      setClientSuggestions(filteredClients.map(client => ({
+        company: client.company,
+        email: client.email,
+        name: client.name
+      })));
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Error fetching client suggestions:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    handleInputChange(e);
+    fetchClientSuggestions(newValue);
+  };
+
+  const handleSuggestionClick = (suggestion: ClientSuggestion) => {
+    onInvoiceChange({
+      ...invoice,
+      clientName: suggestion.company,
+      clientEmail: suggestion.email
+    });
+    setShowSuggestions(false);
+  };
+
   return (
     <form className="space-y-6">
       <h2 className="text-2xl font-bold mb-6">Invoice Details</h2>
@@ -197,22 +259,49 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Client Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Client Name *
+          </label>
           <input
             type="text"
             name="clientName"
             value={invoice.clientName}
-            onChange={handleInputChange}
-            placeholder="Client Name"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            onChange={handleClientNameChange}
+            required
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          
+          {/* Suggestions Dropdown */}
+          {showSuggestions && clientSuggestions.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+              {clientSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex flex-col"
+                >
+                  <span className="font-medium">{suggestion.company}</span>
+                  <span className="text-sm text-gray-500">{suggestion.email}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Client Email *
+          </label>
           <input
             type="email"
             name="clientEmail"
             value={invoice.clientEmail}
             onChange={handleInputChange}
-            placeholder="Client Email"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            required
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
