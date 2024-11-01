@@ -389,7 +389,7 @@ export default function Dashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
                   <div className="flex items-center mb-2">
-                    <FaMoneyBillWave className="text-green-500 mr-2" />
+                    <FaMoneyBillWave className="text-yellow-500 mr-2" />
                     <h3 className="font-medium text-gray-600">Total Revenue</h3>
                   </div>
                   <p className="text-2xl font-semibold text-gray-900">${getTotalRevenue()}</p>
@@ -397,7 +397,7 @@ export default function Dashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
                   <div className="flex items-center mb-2">
-                    <FaCreditCard className="text-blue-500 mr-2" />
+                    <FaCreditCard className="text-green-500 mr-2" />
                     <h3 className="font-medium text-gray-600">Total Paid</h3>
                   </div>
                   <p className="text-2xl font-semibold text-gray-900">${getTotalPaid()}</p>
