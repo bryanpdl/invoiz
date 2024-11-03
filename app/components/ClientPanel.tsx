@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Invoice } from '../types/invoice';
+import { Invoice, PaymentTerms } from '../types/invoice';
 import { FaStar, FaHistory, FaUserTag, FaAddressCard, FaCog, FaTrash, FaUserPlus } from 'react-icons/fa';
 import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -30,6 +30,13 @@ function determinePaymentRegularity(invoices: Invoice[]): 'regular' | 'irregular
   return hasOverdueOrUnpaid ? 'irregular' : 'regular';
 }
 
+const getPreferredPaymentMethod = (paymentTerms: PaymentTerms): string | null => {
+  if (paymentTerms.creditCard?.length > 0) return paymentTerms.creditCard[0];
+  if (paymentTerms.bankTransfer) return 'Bank Transfer';
+  if (paymentTerms.paypal) return 'PayPal';
+  return null;
+};
+
 export default function ClientPanel({ invoices }: ClientPanelProps) {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
@@ -57,10 +64,7 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
               paymentRegularity: invoice.paid ? 'regular' : 'irregular',
               customPaymentTerms: {
                 lateFeePercentage: invoice.paymentTerms?.lateFeePercentage || null,
-                preferredPaymentMethod: invoice.paymentTerms?.creditCard?.[0] || 
-                                    invoice.paymentTerms?.bankTransfer || 
-                                    invoice.paymentTerms?.paypal || 
-                                    null
+                preferredPaymentMethod: getPreferredPaymentMethod(invoice.paymentTerms)
               }
             });
           } else {
