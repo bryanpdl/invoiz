@@ -58,7 +58,24 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    onInvoiceChange({ ...invoice, [name]: value });
+    
+    // Handle payment terms fields differently
+    if (name === 'lateFeePercentage') {
+      onInvoiceChange({
+        ...invoice,
+        paymentTerms: {
+          ...invoice.paymentTerms,
+          lateFeePercentage: value === '' ? null : parseFloat(value),
+        },
+      });
+      return;
+    }
+
+    // Handle other fields
+    onInvoiceChange({
+      ...invoice,
+      [name]: value,
+    });
   };
 
   const handleAddItem = () => {
@@ -114,6 +131,25 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
     });
   };
 
+  const handleBankTransferChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    onInvoiceChange({
+      ...invoice,
+      paymentTerms: {
+        ...invoice.paymentTerms,
+        bankTransfer: {
+          ...(invoice.paymentTerms.bankTransfer || {
+            accountName: '',
+            accountNumber: '',
+            bankName: '',
+            routingNumber: '',
+          }),
+          [name]: value,
+        },
+      },
+    });
+  };
+
   const togglePaymentMethod = (method: keyof PaymentTerms) => {
     onInvoiceChange({
       ...invoice,
@@ -124,18 +160,28 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
             ? (invoice.paymentTerms[method].length > 0 ? [] : [''])
             : method === 'lateFeePercentage'
             ? (invoice.paymentTerms[method] === null ? 0 : null)
-            : (invoice.paymentTerms[method] !== null ? null : ''),
+            : method === 'bankTransfer'
+            ? (invoice.paymentTerms[method] === null ? {
+                accountName: '',
+                accountNumber: '',
+                bankName: '',
+                routingNumber: '',
+              } : null)
+            : method === 'paypal'
+            ? (invoice.paymentTerms[method] === null ? { email: '' } : null)
+            : null,
       },
     });
   };
 
-  const handlePaymentTermsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handlePaypalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onInvoiceChange({
       ...invoice,
       paymentTerms: {
         ...invoice.paymentTerms,
-        [name]: name === 'lateFeePercentage' ? (value ? parseFloat(value) : null) : value,
+        paypal: {
+          email: e.target.value,
+        },
       },
     });
   };
@@ -231,8 +277,13 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
     setShowSuggestions(false);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSaveInvoice();
+  };
+
   return (
-    <form className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <h2 className="text-2xl font-bold mb-6">Invoice Details</h2>
       
       <div className="space-y-4">
@@ -465,51 +516,114 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
         ></textarea>
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-700 mb-2">Payment Terms</h3>
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => togglePaymentMethod('bankTransfer')}
-              className={`p-2 rounded-full ${invoice.paymentTerms.bankTransfer !== null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              <FaUniversity />
-            </button>
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-gray-900">Payment Terms</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Bank Transfer */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => togglePaymentMethod('bankTransfer')}
+                className={`p-2 rounded-full ${invoice.paymentTerms.bankTransfer !== null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                <FaUniversity />
+              </button>
+              <span className="font-medium text-gray-700">Bank Transfer</span>
+            </div>
+            
             {invoice.paymentTerms.bankTransfer !== null && (
-              <input
-                type="text"
-                name="bankTransfer"
-                value={invoice.paymentTerms.bankTransfer || ''}
-                onChange={handlePaymentTermsChange}
-                className="ml-2 p-2 border rounded"
-                placeholder="Enter bank transfer details"
-              />
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                <input
+                  type="text"
+                  name="accountName"
+                  value={invoice.paymentTerms.bankTransfer.accountName}
+                  onChange={handleBankTransferChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Account Name"
+                />
+                <input
+                  type="text"
+                  name="accountNumber"
+                  value={invoice.paymentTerms.bankTransfer.accountNumber}
+                  onChange={handleBankTransferChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Account Number"
+                />
+                <input
+                  type="text"
+                  name="bankName"
+                  value={invoice.paymentTerms.bankTransfer.bankName}
+                  onChange={handleBankTransferChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Bank Name"
+                />
+                <input
+                  type="text"
+                  name="routingNumber"
+                  value={invoice.paymentTerms.bankTransfer.routingNumber}
+                  onChange={handleBankTransferChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Routing Number"
+                />
+              </div>
             )}
           </div>
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => togglePaymentMethod('creditCard')}
-              className={`p-2 rounded-full ${invoice.paymentTerms.creditCard.length > 0 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              <FaCreditCard />
-            </button>
+
+          {/* PayPal */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => togglePaymentMethod('paypal')}
+                className={`p-2 rounded-full ${invoice.paymentTerms.paypal !== null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                <FaPaypal />
+              </button>
+              <span className="font-medium text-gray-700">PayPal</span>
+            </div>
+            
+            {invoice.paymentTerms.paypal !== null && (
+              <div className="mt-4">
+                <input
+                  type="email"
+                  value={invoice.paymentTerms.paypal.email}
+                  onChange={handlePaypalChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="PayPal Email"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Credit Card */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => togglePaymentMethod('creditCard')}
+                className={`p-2 rounded-full ${invoice.paymentTerms.creditCard.length > 0 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                <FaCreditCard />
+              </button>
+              <span className="font-medium text-gray-700">Credit Cards</span>
+            </div>
+            
             {invoice.paymentTerms.creditCard.length > 0 && (
-              <div className="relative ml-2">
+              <div className="mt-4">
                 <button
                   type="button"
                   onClick={() => setShowCreditCardDropdown(!showCreditCardDropdown)}
-                  className="p-2 border rounded"
+                  className="w-full p-2 border rounded-lg text-left"
                 >
                   {invoice.paymentTerms.creditCard.length > 0 && invoice.paymentTerms.creditCard[0] !== ''
                     ? invoice.paymentTerms.creditCard.join(', ')
                     : 'Select credit cards'}
                 </button>
                 {showCreditCardDropdown && (
-                  <div className="absolute z-10 mt-1 w-48 rounded-md bg-white shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full rounded-lg bg-white shadow-lg border border-gray-200">
                     {creditCardOptions.map((option) => (
-                      <label key={option} className="flex items-center px-4 py-2 hover:bg-gray-100">
+                      <label key={option} className="flex items-center px-4 py-2 hover:bg-gray-50">
                         <input
                           type="checkbox"
                           checked={invoice.paymentTerms.creditCard.includes(option)}
@@ -524,43 +638,32 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
               </div>
             )}
           </div>
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => togglePaymentMethod('paypal')}
-              className={`p-2 rounded-full ${invoice.paymentTerms.paypal !== null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              <FaPaypal />
-            </button>
-            {invoice.paymentTerms.paypal !== null && (
-              <input
-                type="text"
-                name="paypal"
-                value={invoice.paymentTerms.paypal || ''}
-                onChange={handlePaymentTermsChange}
-                className="ml-2 p-2 border rounded"
-                placeholder="Enter PayPal email"
-              />
-            )}
-          </div>
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => togglePaymentMethod('lateFeePercentage')}
-              className={`p-2 rounded-full ${invoice.paymentTerms.lateFeePercentage !== null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              <FaPercent />
-            </button>
+
+          {/* Late Fee */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => togglePaymentMethod('lateFeePercentage')}
+                className={`p-2 rounded-full ${invoice.paymentTerms.lateFeePercentage !== null ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                <FaPercent />
+              </button>
+              <span className="font-medium text-gray-700">Late Fee</span>
+            </div>
+            
             {invoice.paymentTerms.lateFeePercentage !== null && (
-              <input
-                type="number"
-                name="lateFeePercentage"
-                value={invoice.paymentTerms.lateFeePercentage || ''}
-                onChange={handlePaymentTermsChange}
-                step="0.1"
-                className="ml-2 p-2 border rounded w-20"
-                placeholder="Late fee %"
-              />
+              <div className="mt-4">
+                <input
+                  type="number"
+                  name="lateFeePercentage"
+                  value={invoice.paymentTerms.lateFeePercentage || ''}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Late fee percentage"
+                />
+              </div>
             )}
           </div>
         </div>

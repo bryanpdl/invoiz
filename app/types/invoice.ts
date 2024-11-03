@@ -4,10 +4,21 @@ export interface InvoiceItem {
   price: number;
 }
 
+interface BankTransferDetails {
+  accountName: string;
+  accountNumber: string;
+  bankName: string;
+  routingNumber: string;
+}
+
+interface PayPalDetails {
+  email: string;
+}
+
 export interface PaymentTerms {
-  bankTransfer: string | null;
+  bankTransfer: BankTransferDetails | null;
   creditCard: string[];
-  paypal: string | null;
+  paypal: PayPalDetails | null;
   lateFeePercentage: number | null;
 }
 

@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FaPlus, FaFileInvoice, FaUserPlus, FaChartLine, FaFileExport } from 'react-icons/fa';
-import AddClientModal from './AddClientModal'; // We'll create this next
+import AddClientModal from './AddClientModal';
+import ExportDataModal from './ExportDataModal';
+import AnalyticsModal from './AnalyticsModal';
 
 export default function QuickMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
 
   return (
     <>
@@ -31,19 +35,25 @@ export default function QuickMenu() {
                 Add Client
               </button>
               <button
-                onClick={() => {/* Export functionality */}}
+                onClick={() => {
+                  setShowExportModal(true);
+                  setIsOpen(false);
+                }}
                 className="flex items-center bg-white text-gray-700 px-4 py-2 rounded-xl shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
               >
                 <FaFileExport className="mr-2" />
                 Export Data
               </button>
-              <Link
-                href="/analytics"
+              <button
+                onClick={() => {
+                  setShowAnalyticsModal(true);
+                  setIsOpen(false);
+                }}
                 className="flex items-center bg-white text-gray-700 px-4 py-2 rounded-xl shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
               >
                 <FaChartLine className="mr-2" />
                 Analytics
-              </Link>
+              </button>
             </div>
           )}
           <button
@@ -65,6 +75,14 @@ export default function QuickMenu() {
             setIsOpen(false);
           }}
         />
+      )}
+
+      {showExportModal && (
+        <ExportDataModal onClose={() => setShowExportModal(false)} />
+      )}
+
+      {showAnalyticsModal && (
+        <AnalyticsModal onClose={() => setShowAnalyticsModal(false)} />
       )}
     </>
   );

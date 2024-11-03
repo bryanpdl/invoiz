@@ -37,6 +37,15 @@ interface ReminderItem {
   date: string;
 }
 
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const router = useRouter();
@@ -392,7 +401,7 @@ export default function Dashboard() {
                     <FaMoneyBillWave className="text-yellow-500 mr-2" />
                     <h3 className="font-medium text-gray-600">Total Revenue</h3>
                   </div>
-                  <p className="text-2xl font-semibold text-gray-900">${getTotalRevenue()}</p>
+                  <p className="text-2xl font-semibold text-gray-900">{formatCurrency(Number(getTotalRevenue()))}</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow">
@@ -400,7 +409,7 @@ export default function Dashboard() {
                     <FaCreditCard className="text-green-500 mr-2" />
                     <h3 className="font-medium text-gray-600">Total Paid</h3>
                   </div>
-                  <p className="text-2xl font-semibold text-gray-900">${getTotalPaid()}</p>
+                  <p className="text-2xl font-semibold text-gray-900">{formatCurrency(Number(getTotalPaid()))}</p>
                   <p className="text-sm text-gray-500 mt-1">
                     {((Number(getTotalPaid()) / Number(getTotalRevenue())) * 100).toFixed(1)}% of total revenue
                   </p>
@@ -462,7 +471,7 @@ export default function Dashboard() {
                         <div className="p-6">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                              <h3 className="font-medium text-gray-900">{invoice.invoiceNumber}</h3>
+                              <h3 className="font-medium text-gray-900">#{invoice.invoiceNumber}</h3>
                               <p className="text-gray-500 text-sm">Client: {invoice.clientName}</p>
                             </div>
                             <button
@@ -479,7 +488,7 @@ export default function Dashboard() {
                           <div className="space-y-2 text-sm text-gray-500">
                             <p>Date: {invoice.date}</p>
                             <p>Due: {invoice.dueDate}</p>
-                            <p className="text-gray-900 font-medium">${(invoice.total || 0).toFixed(2)}</p>
+                            <p className="text-gray-900 font-medium">{formatCurrency(invoice.total || 0)}</p>
                           </div>
                           <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
                             <Link 
@@ -534,7 +543,7 @@ export default function Dashboard() {
 
                     <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
                       <div className="flex items-center mb-2">
-                        <FaCalendarAlt className="text-green-500 mr-2" />
+                        <FaCalendarAlt className="text-blue-500 mr-2" />
                         <h3 className="font-medium text-gray-600">Next Reminder</h3>
                       </div>
                       <p className="text-sm text-gray-600">
