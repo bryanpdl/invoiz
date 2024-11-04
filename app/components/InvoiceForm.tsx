@@ -288,22 +288,49 @@ export default function InvoiceForm({ invoice, onInvoiceChange, onGeneratePDF, o
       
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Business Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        {/* Business Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Business Name *
+          </label>
           <input
             type="text"
             name="businessName"
             value={invoice.businessName}
             onChange={handleInputChange}
-            placeholder="Business Name"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            required
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <input
-            type="text"
-            name="invoiceNumber"
-            value={invoice.invoiceNumber}
+        </div>
+
+        {/* Business Address */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Business Address
+          </label>
+          <textarea
+            name="businessAddress"
+            value={invoice.businessAddress}
             onChange={handleInputChange}
-            placeholder="Invoice Number"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your business address"
+          />
+        </div>
+
+        {/* Business Phone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Business Phone
+          </label>
+          <input
+            type="tel"
+            name="businessPhone"
+            value={invoice.businessPhone}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your business phone"
           />
         </div>
       </div>

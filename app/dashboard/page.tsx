@@ -21,7 +21,11 @@ import {
   FaBell,
   FaEnvelope,
   FaToggleOn,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaLink
 } from 'react-icons/fa';
 import Image from 'next/image';
 import QuickMenu from '../components/QuickMenu';
@@ -29,6 +33,7 @@ import InvoiceControls from '../components/InvoiceControls';
 import ClientPanel from '../components/ClientPanel';
 import { Switch } from '@headlessui/react';
 import BillingModal from '../components/BillingModal';
+import PreviewModal from '../components/PreviewModal';
 
 interface ReminderItem {
   type: 'beforeDue' | 'onDue' | 'afterDue';
@@ -79,6 +84,7 @@ export default function Dashboard() {
     reminderFrequency: 7, // days between reminders after due
   });
   const [showBillingModal, setShowBillingModal] = useState(false);
+  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -108,11 +114,22 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteInvoice = async (id: string) => {
-    if (confirm('Are you sure you want to delete this invoice?')) {
+  const handleDeleteInvoice = async (invoiceId?: string) => {
+    if (!invoiceId) return;
+    
+    if (window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
       try {
-        await deleteInvoice(id);
-        setInvoices(invoices.filter(invoice => invoice.id !== id));
+        await deleteInvoice(invoiceId);
+        
+        // Update local state
+        setInvoices(prevInvoices => 
+          prevInvoices.filter(inv => inv.id !== invoiceId)
+        );
+        
+        // Update filtered invoices
+        setFilteredInvoices(prevFiltered =>
+          prevFiltered.filter(inv => inv.id !== invoiceId)
+        );
       } catch (error) {
         console.error('Error deleting invoice:', error);
       }
@@ -483,23 +500,48 @@ export default function Dashboard() {
                               {invoice.paid ? 'Paid' : 'Pending'}
                             </button>
                           </div>
-                          <div className="space-y-2 text-sm text-gray-500">
-                            <p>Date: {invoice.date}</p>
-                            <p className="text-gray-900 font-medium">{formatCurrency(invoice.total || 0)}</p>
-                          </div>
-                          <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
-                            <Link 
-                              href={`/edit-invoice/${invoice.id}`} 
-                              className="text-gray-600 hover:text-gray-800 text-sm font-medium rounded-lg px-3 py-1 hover:bg-gray-50 transition-colors"
-                            >
-                              Edit
-                            </Link>
-                            <button
-                              onClick={() => handleDeleteInvoice(invoice.id!)}
-                              className="text-gray-400 hover:text-red-600 text-sm font-medium rounded-lg px-3 py-1 hover:bg-red-50 transition-colors"
-                            >
-                              Delete
-                            </button>
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center -ml-1.5 space-x-1">
+                              {/* Preview Button */}
+                              <button
+                                onClick={() => setPreviewInvoice(invoice)}
+                                className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Preview Invoice"
+                              >
+                                <FaEye size={18} />
+                              </button>
+
+                              {/* View Button */}
+                              <Link
+                                href={`/invoice/${invoice.id}`}
+                                className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                                title="View Invoice Link"
+                              >
+                                <FaLink size={18} />
+                              </Link>
+
+                              {/* Edit Button */}
+                              <Link
+                                href={`/edit-invoice/${invoice.id}`}
+                                className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                title="Edit Invoice"
+                              >
+                                <FaEdit size={18} />
+                              </Link>
+
+                              {/* Delete Button */}
+                              <button
+                                onClick={() => handleDeleteInvoice(invoice.id)}
+                                className="p-1.5 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete Invoice"
+                              >
+                                <FaTrash size={18} />
+                              </button>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total)}</p>
+                              <p className="text-xs text-gray-500">Due: {invoice.dueDate}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -699,6 +741,13 @@ export default function Dashboard() {
 
       {showBillingModal && (
         <BillingModal onClose={() => setShowBillingModal(false)} />
+      )}
+
+      {previewInvoice && (
+        <PreviewModal
+          invoice={previewInvoice}
+          onClose={() => setPreviewInvoice(null)}
+        />
       )}
     </ProtectedRoute>
   );

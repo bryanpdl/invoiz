@@ -26,6 +26,8 @@ export interface Invoice {
   id?: string;
   userId: string;
   businessName: string;
+  businessAddress: string;
+  businessPhone: string;
   invoiceNumber: string;
   date: string;
   dueDate: string;

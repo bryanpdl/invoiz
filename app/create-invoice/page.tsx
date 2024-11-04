@@ -16,6 +16,8 @@ export default function CreateInvoice() {
   const [invoice, setInvoice] = useState<Invoice>({
     userId: user?.uid || '',
     businessName: '',
+    businessAddress: '',
+    businessPhone: '',
     invoiceNumber: '',
     date: '',
     dueDate: '',

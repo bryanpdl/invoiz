@@ -47,7 +47,13 @@ const InvoicePreview = memo(function InvoicePreview({ invoice, showWatermark = f
     <div className="bg-white p-6 rounded-xl">
       <div className="border-b border-gray-100 pb-6 mb-6">
         <h2 className="text-2xl font-bold text-gray-900">{invoice.businessName}</h2>
-        <p className="text-gray-500">Invoice #{invoice.invoiceNumber}</p>
+        {invoice.businessAddress && (
+          <p className="text-gray-600 mt-1 whitespace-pre-line">{invoice.businessAddress}</p>
+        )}
+        {invoice.businessPhone && (
+          <p className="text-gray-600 mt-1">Phone: {invoice.businessPhone}</p>
+        )}
+        <p className="text-gray-500 mt-2">Invoice #{invoice.invoiceNumber}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-8 mb-8">

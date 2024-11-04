@@ -16,7 +16,14 @@ export default function Settings() {
     emailNotifications: false,
     acceptCreditCards: false,
     acceptBankTransfers: false,
-    businessName: ''
+    businessName: '',
+    businessAddress: '',
+    businessPhone: '',
+    autoFillBusiness: {
+      name: true,
+      address: true,
+      phone: true,
+    }
   });
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -216,67 +223,114 @@ export default function Settings() {
                   <p className="mt-1 text-sm text-gray-500">Customize the appearance of your invoices.</p>
                   
                   <div className="mt-6 space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
-                      <input
-                        type="text"
-                        value={settings.businessName}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          businessName: e.target.value
-                        }))}
-                        placeholder="Enter your business name"
-                        className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
-                      />
-                      <p className="mt-2 text-xs text-gray-500">
-                        This will be automatically filled when creating new invoices
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
-                      <div className="mt-2 flex items-center gap-x-6">
-                        {logoUrl ? (
-                          <img
-                            src={logoUrl}
-                            alt="Company logo"
-                            className="h-24 w-auto object-contain rounded-lg border border-gray-200"
-                          />
-                        ) : (
-                          <div className="h-24 w-40 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-                            <FaImage className="text-gray-400 text-xl" />
-                          </div>
-                        )}
-                        <div>
+                    {/* Business Name */}
+                    <div className="flex items-start justify-between gap-x-4">
+                      <div className="flex-grow">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+                        <input
+                          type="text"
+                          value={settings.businessName}
+                          onChange={(e) => setSettings(prev => ({
+                            ...prev,
+                            businessName: e.target.value
+                          }))}
+                          placeholder="Enter your business name"
+                          className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+                        />
+                      </div>
+                      <div className="pt-8">
+                        <label className="relative inline-flex items-center cursor-pointer">
                           <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                            id="logo-upload"
+                            type="checkbox"
+                            checked={settings.autoFillBusiness.name}
+                            onChange={() => setSettings(prev => ({
+                              ...prev,
+                              autoFillBusiness: {
+                                ...prev.autoFillBusiness,
+                                name: !prev.autoFillBusiness.name
+                              }
+                            }))}
+                            className="sr-only peer"
                           />
-                          <label
-                            htmlFor="logo-upload"
-                            className={`inline-block rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer ${
-                              uploading ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                          >
-                            {uploading ? 'Uploading...' : logoUrl ? 'Change logo' : 'Upload logo'}
-                          </label>
-                          {logoUrl && (
-                            <button
-                              onClick={() => setLogoUrl(null)}
-                              className="ml-3 text-sm text-red-600 hover:text-red-500"
-                            >
-                              Remove
-                            </button>
-                          )}
-                          <p className="mt-2 text-xs text-gray-500">
-                            Recommended: 300x100 pixels, PNG or JPG
-                          </p>
-                        </div>
+                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <span className="ml-2 text-sm font-medium text-gray-500">Auto-fill</span>
+                        </label>
                       </div>
                     </div>
+
+                    {/* Business Address */}
+                    <div className="flex items-start justify-between gap-x-4">
+                      <div className="flex-grow">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
+                        <textarea
+                          value={settings.businessAddress}
+                          onChange={(e) => setSettings(prev => ({
+                            ...prev,
+                            businessAddress: e.target.value
+                          }))}
+                          placeholder="Enter your business address"
+                          rows={3}
+                          className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+                        />
+                      </div>
+                      <div className="pt-8">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.autoFillBusiness.address}
+                            onChange={() => setSettings(prev => ({
+                              ...prev,
+                              autoFillBusiness: {
+                                ...prev.autoFillBusiness,
+                                address: !prev.autoFillBusiness.address
+                              }
+                            }))}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <span className="ml-2 text-sm font-medium text-gray-500">Auto-fill</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Business Phone */}
+                    <div className="flex items-start justify-between gap-x-4">
+                      <div className="flex-grow">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Phone</label>
+                        <input
+                          type="tel"
+                          value={settings.businessPhone}
+                          onChange={(e) => setSettings(prev => ({
+                            ...prev,
+                            businessPhone: e.target.value
+                          }))}
+                          placeholder="Enter your business phone"
+                          className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+                        />
+                      </div>
+                      <div className="pt-8">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.autoFillBusiness.phone}
+                            onChange={() => setSettings(prev => ({
+                              ...prev,
+                              autoFillBusiness: {
+                                ...prev.autoFillBusiness,
+                                phone: !prev.autoFillBusiness.phone
+                              }
+                            }))}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <span className="ml-2 text-sm font-medium text-gray-500">Auto-fill</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      Toggle auto-fill to automatically populate these fields when creating new invoices
+                    </p>
                   </div>
                 </section>
               </>
