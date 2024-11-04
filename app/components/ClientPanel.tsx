@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Invoice, PaymentTerms } from '../types/invoice';
-import { FaStar, FaHistory, FaUserTag, FaAddressCard, FaCog, FaTrash, FaUserPlus } from 'react-icons/fa';
+import { FaStar, FaHistory, FaUserTag, FaAddressCard, FaCog, FaTrash, FaUserPlus, FaEdit } from 'react-icons/fa';
 import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../hooks/useAuth';
@@ -10,6 +10,9 @@ import Link from 'next/link';
 import { FaFileInvoice } from 'react-icons/fa';
 import AddClientModal from './AddClientModal';
 import { Client } from '../types/client';
+import ViewClientModal from './ViewClientModal';
+import { formatCurrency } from '../utils/formatters';
+import EditClientModal from './EditClientModal';
 
 interface ClientPanelProps {
   invoices: Invoice[];
@@ -30,11 +33,11 @@ function determinePaymentRegularity(invoices: Invoice[]): 'regular' | 'irregular
   return hasOverdueOrUnpaid ? 'irregular' : 'regular';
 }
 
-const getPreferredPaymentMethod = (paymentTerms: PaymentTerms): string | null => {
+const getPreferredPaymentMethod = (paymentTerms: PaymentTerms): string | undefined => {
   if (paymentTerms.creditCard?.length > 0) return paymentTerms.creditCard[0];
   if (paymentTerms.bankTransfer) return 'Bank Transfer';
   if (paymentTerms.paypal) return 'PayPal';
-  return null;
+  return undefined;
 };
 
 export default function ClientPanel({ invoices }: ClientPanelProps) {
@@ -43,6 +46,10 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
   const [loading, setLoading] = useState(true);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClientForEdit, setSelectedClientForEdit] = useState<Client | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -58,12 +65,12 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
               id: invoice.clientEmail,
               company: invoice.clientName || 'Unnamed Company',
               name: '',
+              userId: user.uid,
               email: invoice.clientEmail,
               totalSpent: invoice.total,
               lastPayment: invoice.paid ? invoice.date : '',
               paymentRegularity: invoice.paid ? 'regular' : 'irregular',
               customPaymentTerms: {
-                lateFeePercentage: invoice.paymentTerms?.lateFeePercentage || null,
                 preferredPaymentMethod: getPreferredPaymentMethod(invoice.paymentTerms)
               }
             });
@@ -138,6 +145,7 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
         // For demo clients, just remove from state
         setClients(prevClients => prevClients.filter(client => client.id !== clientId));
       }
+      setClientToDelete(null); // Reset after successful deletion
     } catch (error) {
       console.error('Error deleting client:', error);
       setDeleteError('Failed to delete client');
@@ -145,6 +153,12 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
       setTimeout(() => setDeleteError(null), 3000);
     }
   };
+
+  const filteredClients = clients.filter(client => 
+    client.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -185,7 +199,7 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
       ) : clients.length > 0 ? (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
               <div className="flex items-center mb-2">
                 <FaStar className="text-yellow-500 mr-2" />
@@ -228,59 +242,96 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
             </div>
           </div>
 
-          {/* Client Cards */}
-          <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {clients.map(client => (
-                <div
-                  key={client.id}
-                  className="p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {client.company || 'Unnamed Company'}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Contact: {client.name || 'N/A'}
-                      </p>
+          {/* Search and Add Client Section */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+            </div>
+            <button
+              onClick={() => setShowAddClientModal(true)}
+              className="flex items-center px-4 py-2 bg-[#273E4E] text-white rounded-lg hover:bg-[#1F3240] transition-colors"
+            >
+              <FaUserPlus className="mr-2" />
+              Add Client
+            </button>
+          </div>
+
+          {/* Client Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredClients.map(client => (
+              <div
+                key={client.id}
+                onClick={() => setSelectedClient(client)}
+                className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow cursor-pointer p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-medium text-gray-900">
+                      {client.company || 'Unnamed Company'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Contact: {client.name || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {client.email}
+                    </p>
+                    {client.phone && (
                       <p className="text-sm text-gray-500">
-                        {client.email}
+                        {client.phone}
                       </p>
-                      {client.phone && (
-                        <p className="text-sm text-gray-500">
-                          {client.phone}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        client.paymentRegularity === 'regular'
-                          ? 'bg-green-50 text-green-700'
-                          : 'bg-yellow-50 text-yellow-700'
-                      }`}>
-                        {client.paymentRegularity}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteClient(client.id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                        title="Delete client"
-                      >
-                        <FaTrash size={14} />
-                      </button>
-                    </div>
+                    )}
                   </div>
-                  <div className="mt-2 text-sm text-gray-600">
-                    <p>Total Revenue: ${client.totalSpent.toFixed(2)}</p>
-                    <p>Last Payment: {
-                      client.lastPayment 
-                        ? new Date(client.lastPayment).toLocaleDateString() 
-                        : 'No payments yet'
-                    }</p>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                      client.paymentRegularity === 'regular'
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-yellow-50 text-yellow-700'
+                    }`}>
+                      {client.paymentRegularity}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedClientForEdit(client);
+                      }}
+                      className="text-[#273E4E] hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors p-1"
+                      title="Edit client"
+                    >
+                      <FaEdit size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setClientToDelete(client.id);
+                      }}
+                      className="text-[#273E4E] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors p-1"
+                      title="Delete client"
+                    >
+                      <FaTrash size={18} />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600">
+                  <p>Total Revenue: {formatCurrency(client.totalSpent)}</p>
+                  <p>Last Payment: {
+                    client.lastPayment 
+                      ? new Date(client.lastPayment).toLocaleDateString() 
+                      : 'No payments yet'
+                  }</p>
+                </div>
+              </div>
+            ))}
           </div>
         </>
       ) : (
@@ -316,6 +367,14 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
         </div>
       )}
 
+      {/* View Client Modal */}
+      {selectedClient && (
+        <ViewClientModal
+          client={selectedClient}
+          onClose={() => setSelectedClient(null)}
+        />
+      )}
+
       {/* Add Client Modal */}
       {showAddClientModal && (
         <AddClientModal
@@ -325,6 +384,48 @@ export default function ClientPanel({ invoices }: ClientPanelProps) {
             setShowAddClientModal(false);
           }}
         />
+      )}
+
+      {/* Edit Client Modal */}
+      {selectedClientForEdit && (
+        <EditClientModal
+          client={selectedClientForEdit}
+          onClose={() => setSelectedClientForEdit(null)}
+          onClientUpdated={(updatedClient: Client) => {
+            setClients(prevClients =>
+              prevClients.map(c => 
+                c.id === updatedClient.id ? updatedClient : c
+              ).sort((a, b) => b.totalSpent - a.totalSpent)
+            );
+            setSelectedClientForEdit(null);
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {clientToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this client? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setClientToDelete(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteClient(clientToDelete)}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

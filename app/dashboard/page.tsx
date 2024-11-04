@@ -85,6 +85,7 @@ export default function Dashboard() {
   });
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -117,22 +118,23 @@ export default function Dashboard() {
   const handleDeleteInvoice = async (invoiceId?: string) => {
     if (!invoiceId) return;
     
-    if (window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
-      try {
-        await deleteInvoice(invoiceId);
-        
-        // Update local state
-        setInvoices(prevInvoices => 
-          prevInvoices.filter(inv => inv.id !== invoiceId)
-        );
-        
-        // Update filtered invoices
-        setFilteredInvoices(prevFiltered =>
-          prevFiltered.filter(inv => inv.id !== invoiceId)
-        );
-      } catch (error) {
-        console.error('Error deleting invoice:', error);
-      }
+    try {
+      await deleteInvoice(invoiceId);
+      
+      // Update local state
+      setInvoices(prevInvoices => 
+        prevInvoices.filter(inv => inv.id !== invoiceId)
+      );
+      
+      // Update filtered invoices
+      setFilteredInvoices(prevFiltered =>
+        prevFiltered.filter(inv => inv.id !== invoiceId)
+      );
+      
+      // Reset the invoiceToDelete state
+      setInvoiceToDelete(null);
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
     }
   };
 
@@ -478,42 +480,44 @@ export default function Dashboard() {
                   <p className="text-gray-500">Loading invoices...</p>
                 ) : filteredInvoices.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredInvoices.map((invoice) => (
-                      <div 
-                        key={invoice.id} 
-                        className="bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all"
+                    {filteredInvoices.map(invoice => (
+                      <div
+                        key={invoice.id}
+                        onClick={() => setPreviewInvoice(invoice)}
+                        className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow cursor-pointer p-6"
                       >
-                        <div className="p-6">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <h3 className="font-medium text-gray-900">#{invoice.invoiceNumber}</h3>
-                              <p className="text-gray-500 text-sm">Client: {invoice.clientName}</p>
-                            </div>
-                            <button
-                              onClick={() => handleTogglePaymentStatus(invoice)}
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                                invoice.paid 
-                                  ? 'bg-green-50 text-green-700 hover:bg-green-100' 
-                                  : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
-                              }`}
-                            >
-                              {invoice.paid ? 'Paid' : 'Pending'}
-                            </button>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {invoice.clientName}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Invoice #{invoice.invoiceNumber}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                            </p>
                           </div>
-                          <div className="mt-4 flex items-center justify-between">
-                            <div className="flex items-center -ml-1.5 space-x-1">
-                              {/* Preview Button */}
-                              <button
-                                onClick={() => setPreviewInvoice(invoice)}
-                                className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Preview Invoice"
-                              >
-                                <FaEye size={18} />
-                              </button>
-
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                            invoice.paid
+                              ? 'bg-green-50 text-green-700'
+                              : new Date(invoice.dueDate) < new Date()
+                              ? 'bg-red-50 text-red-700'
+                              : 'bg-yellow-50 text-yellow-700'
+                          }`}>
+                            {invoice.paid ? 'Paid' : new Date(invoice.dueDate) < new Date() ? 'Overdue' : 'Pending'}
+                          </span>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-900 font-medium">
+                              {formatCurrency(invoice.total)}
+                            </span>
+                            <div className="flex items-center -mr-1.5 space-x-1">
                               {/* View Button */}
                               <Link
                                 href={`/invoice/${invoice.id}`}
+                                onClick={(e) => e.stopPropagation()}
                                 className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                                 title="View Invoice Link"
                               >
@@ -523,6 +527,7 @@ export default function Dashboard() {
                               {/* Edit Button */}
                               <Link
                                 href={`/edit-invoice/${invoice.id}`}
+                                onClick={(e) => e.stopPropagation()}
                                 className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                                 title="Edit Invoice"
                               >
@@ -531,16 +536,15 @@ export default function Dashboard() {
 
                               {/* Delete Button */}
                               <button
-                                onClick={() => handleDeleteInvoice(invoice.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInvoiceToDelete(invoice.id || '');
+                                }}
                                 className="p-1.5 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Delete Invoice"
                               >
                                 <FaTrash size={18} />
                               </button>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">{formatCurrency(invoice.total)}</p>
-                              <p className="text-xs text-gray-500">Due: {invoice.dueDate}</p>
                             </div>
                           </div>
                         </div>
@@ -748,6 +752,31 @@ export default function Dashboard() {
           invoice={previewInvoice}
           onClose={() => setPreviewInvoice(null)}
         />
+      )}
+
+      {invoiceToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full m-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this invoice? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setInvoiceToDelete(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteInvoice(invoiceToDelete)}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </ProtectedRoute>
   );

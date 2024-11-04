@@ -1,14 +1,22 @@
 export interface Client {
-    id: string;
-    company: string;
-    name?: string;
-    email: string;
-    phone?: string;
-    totalSpent: number;
-    lastPayment: string | null;
-    paymentRegularity: 'regular' | 'irregular';
-    customPaymentTerms?: {
-      lateFeePercentage: number | null;
-      preferredPaymentMethod: string | null;
+  id: string;
+  userId: string;
+  name: string;
+  company: string;
+  email: string;
+  phone?: string;
+  notes?: string;
+  totalSpent: number;
+  lastPayment?: string;
+  paymentRegularity: 'regular' | 'irregular';
+  customPaymentTerms?: {
+    preferredPaymentMethod?: string;
+    bankDetails?: {
+      accountName: string;
+      accountNumber: string;
+      bankName: string;
+      routingNumber: string;
     };
-  }
+    paypalEmail?: string;
+  };
+}

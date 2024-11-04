@@ -3,8 +3,37 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { FaUser, FaFileInvoice, FaEnvelope, FaEye, FaEyeSlash, FaCreditCard, FaImage, FaArrowLeft } from 'react-icons/fa';
+import { FaUser, FaFileInvoice, FaEnvelope, FaEye, FaEyeSlash, FaCreditCard, FaImage, FaArrowLeft, FaPalette } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+
+// Add new types for theme options
+interface ThemeOption {
+  id: string;
+  name: string;
+  preview: string;
+  description: string;
+}
+
+const THEME_OPTIONS: ThemeOption[] = [
+  {
+    id: 'classic',
+    name: 'Classic',
+    preview: '/themes/classic.png', // These images don't exist yet
+    description: 'Clean and professional design with traditional layout'
+  },
+  {
+    id: 'modern',
+    name: 'Modern',
+    preview: '/themes/modern.png',
+    description: 'Contemporary design with bold typography'
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    preview: '/themes/minimal.png',
+    description: 'Sleek and simple design focusing on essential information'
+  }
+];
 
 export default function Settings() {
   const router = useRouter();
@@ -23,11 +52,16 @@ export default function Settings() {
       name: true,
       address: true,
       phone: true,
-    }
+    },
+    showBusinessName: false,
+    showBusinessAddress: false,
+    showBusinessPhone: false,
   });
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('classic');
+  const [logo, setLogo] = useState<string | null>(null);
 
   const handleToggle = (setting: keyof typeof settings) => {
     setSettings(prev => ({
@@ -42,20 +76,16 @@ export default function Settings() {
     router.push('/dashboard');
   };
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    // Here you would typically:
-    // 1. Upload the file to your storage (e.g., Firebase Storage)
-    // 2. Get the URL
-    // 3. Save it to the user's settings
-    // For now, we'll just simulate it:
-    setTimeout(() => {
-      setLogoUrl(URL.createObjectURL(file));
-      setUploading(false);
-    }, 1000);
+    if (file) {
+      // For now, just create a preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setLogo(previewUrl);
+      
+      // TODO: Implement actual file upload to storage
+      // uploadLogoToStorage(file).then(url => setLogo(url));
+    }
   };
 
   return (
@@ -217,120 +247,178 @@ export default function Settings() {
                   </div>
                 </section>
 
-                {/* New Invoice Customization Section */}
+                {/* Invoice Customization Section */}
                 <section className="pt-10 border-t border-gray-200">
                   <h2 className="text-base font-semibold text-gray-900">Invoice Customization</h2>
                   <p className="mt-1 text-sm text-gray-500">Customize the appearance of your invoices.</p>
                   
-                  <div className="mt-6 space-y-6">
-                    {/* Business Name */}
-                    <div className="flex items-start justify-between gap-x-4">
-                      <div className="flex-grow">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
-                        <input
-                          type="text"
-                          value={settings.businessName}
-                          onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            businessName: e.target.value
-                          }))}
-                          placeholder="Enter your business name"
-                          className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                      <div className="pt-8">
-                        <label className="relative inline-flex items-center cursor-pointer">
+                  <div className="mt-6 space-y-8">
+                    {/* Business Information */}
+                    <div className="space-y-4">
+                      {/* Business Name */}
+                      <div className="flex items-start justify-between gap-x-4">
+                        <div className="flex-grow">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
                           <input
-                            type="checkbox"
-                            checked={settings.autoFillBusiness.name}
-                            onChange={() => setSettings(prev => ({
+                            type="text"
+                            value={settings.businessName}
+                            onChange={(e) => setSettings(prev => ({
                               ...prev,
-                              autoFillBusiness: {
-                                ...prev.autoFillBusiness,
-                                name: !prev.autoFillBusiness.name
-                              }
+                              businessName: e.target.value
                             }))}
-                            className="sr-only peer"
+                            placeholder="Enter your business name"
+                            className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
                           />
-                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                          <span className="ml-2 text-sm font-medium text-gray-500">Auto-fill</span>
-                        </label>
+                        </div>
+                        <div className="pt-8">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={settings.showBusinessName}
+                              onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                showBusinessName: e.target.checked
+                              }))}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#273E4E]"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Business Address */}
+                      <div className="flex items-start justify-between gap-x-4">
+                        <div className="flex-grow">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
+                          <textarea
+                            value={settings.businessAddress}
+                            onChange={(e) => setSettings(prev => ({
+                              ...prev,
+                              businessAddress: e.target.value
+                            }))}
+                            placeholder="Enter your business address"
+                            rows={3}
+                            className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                        <div className="pt-8">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={settings.showBusinessAddress}
+                              onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                showBusinessAddress: e.target.checked
+                              }))}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#273E4E]"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Business Phone */}
+                      <div className="flex items-start justify-between gap-x-4">
+                        <div className="flex-grow">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Business Phone</label>
+                          <input
+                            type="tel"
+                            value={settings.businessPhone}
+                            onChange={(e) => setSettings(prev => ({
+                              ...prev,
+                              businessPhone: e.target.value
+                            }))}
+                            placeholder="Enter your business phone"
+                            className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                        <div className="pt-8">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={settings.showBusinessPhone}
+                              onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                showBusinessPhone: e.target.checked
+                              }))}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#273E4E]"></div>
+                          </label>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Business Address */}
-                    <div className="flex items-start justify-between gap-x-4">
-                      <div className="flex-grow">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
-                        <textarea
-                          value={settings.businessAddress}
-                          onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            businessAddress: e.target.value
-                          }))}
-                          placeholder="Enter your business address"
-                          rows={3}
-                          className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
-                        />
+                    {/* Theme Selection */}
+                    <div>
+                      <div className="flex items-center gap-x-2 mb-4">
+                        <FaPalette className="text-gray-400" />
+                        <label className="block text-sm font-medium text-gray-700">Invoice Theme</label>
                       </div>
-                      <div className="pt-8">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={settings.autoFillBusiness.address}
-                            onChange={() => setSettings(prev => ({
-                              ...prev,
-                              autoFillBusiness: {
-                                ...prev.autoFillBusiness,
-                                address: !prev.autoFillBusiness.address
-                              }
-                            }))}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                          <span className="ml-2 text-sm font-medium text-gray-500">Auto-fill</span>
-                        </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {THEME_OPTIONS.map((theme) => (
+                          <div
+                            key={theme.id}
+                            onClick={() => setSelectedTheme(theme.id)}
+                            className={`cursor-pointer rounded-xl border-2 p-4 transition-all ${
+                              selectedTheme === theme.id
+                                ? 'border-[#273E4E] bg-[#273E4E]/5'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="aspect-video bg-gray-100 rounded-lg mb-3">
+                              {/* Theme preview image placeholder */}
+                              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                Preview
+                              </div>
+                            </div>
+                            <h3 className="font-medium text-gray-900">{theme.name}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{theme.description}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Business Phone */}
-                    <div className="flex items-start justify-between gap-x-4">
-                      <div className="flex-grow">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Phone</label>
-                        <input
-                          type="tel"
-                          value={settings.businessPhone}
-                          onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            businessPhone: e.target.value
-                          }))}
-                          placeholder="Enter your business phone"
-                          className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
-                        />
+                    {/* Logo Upload */}
+                    <div>
+                      <div className="flex items-center gap-x-2 mb-4">
+                        <FaImage className="text-gray-400" />
+                        <label className="block text-sm font-medium text-gray-700">Business Logo</label>
                       </div>
-                      <div className="pt-8">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={settings.autoFillBusiness.phone}
-                            onChange={() => setSettings(prev => ({
-                              ...prev,
-                              autoFillBusiness: {
-                                ...prev.autoFillBusiness,
-                                phone: !prev.autoFillBusiness.phone
-                              }
-                            }))}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                          <span className="ml-2 text-sm font-medium text-gray-500">Auto-fill</span>
-                        </label>
+                      <div className="mt-2">
+                        {logo ? (
+                          <div className="relative w-48 h-48 rounded-lg overflow-hidden group">
+                            <img
+                              src={logo}
+                              alt="Business logo"
+                              className="w-full h-full object-contain"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button
+                                onClick={() => setLogo(null)}
+                                className="text-white text-sm hover:underline"
+                              >
+                                Remove Logo
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors">
+                            <FaImage className="text-gray-400 text-2xl mb-2" />
+                            <span className="text-sm text-gray-500">Upload Logo</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                        <p className="mt-2 text-sm text-gray-500">
+                          Recommended size: 300x100 pixels. Max file size: 2MB.
+                        </p>
                       </div>
                     </div>
-
-                    <p className="text-xs text-gray-500">
-                      Toggle auto-fill to automatically populate these fields when creating new invoices
-                    </p>
                   </div>
                 </section>
               </>
