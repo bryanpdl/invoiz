@@ -487,7 +487,6 @@ export default function Dashboard() {
                           </div>
                           <div className="space-y-2 text-sm text-gray-500">
                             <p>Date: {invoice.date}</p>
-                            <p>Due: {invoice.dueDate}</p>
                             <p className="text-gray-900 font-medium">{formatCurrency(invoice.total || 0)}</p>
                           </div>
                           <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">

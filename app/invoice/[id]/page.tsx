@@ -73,11 +73,11 @@ export default function InvoiceView() {
       {invoice.showWatermark && (
         <div className="bg-gray-100 p-2 text-center mb-4">
           <Link href="/" className="text-blue-500 hover:underline">
-            Created with InvoiceGen - Create your own invoices for free!
+            Created with Invoiz - Create your own invoices for free!
           </Link>
         </div>
       )}
-      <InvoicePreview invoice={invoice} showWatermark={invoice.showWatermark} showPayNowButton={showPayNowButton} />
+      <InvoicePreview invoice={invoice} showWatermark={false} showPayNowButton={showPayNowButton} />
     </div>
   );
 }
