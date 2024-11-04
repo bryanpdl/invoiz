@@ -28,6 +28,7 @@ import QuickMenu from '../components/QuickMenu';
 import InvoiceControls from '../components/InvoiceControls';
 import ClientPanel from '../components/ClientPanel';
 import { Switch } from '@headlessui/react';
+import BillingModal from '../components/BillingModal';
 
 interface ReminderItem {
   type: 'beforeDue' | 'onDue' | 'afterDue';
@@ -77,6 +78,7 @@ export default function Dashboard() {
     daysBeforeDue: 3,
     reminderFrequency: 7, // days between reminders after due
   });
+  const [showBillingModal, setShowBillingModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -355,18 +357,14 @@ export default function Dashboard() {
 
                   <Link
                     href="/billing"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowBillingModal(true);
+                    }}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <FaMoneyBillWave className="mr-3 text-gray-400" />
                     Billing & Plan
-                  </Link>
-
-                  <Link
-                    href="/payment-methods"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <FaCreditCard className="mr-3 text-gray-400" />
-                    Payment Methods
                   </Link>
 
                   <div className="border-t border-gray-100">
@@ -698,6 +696,10 @@ export default function Dashboard() {
 
         <QuickMenu />
       </div>
+
+      {showBillingModal && (
+        <BillingModal onClose={() => setShowBillingModal(false)} />
+      )}
     </ProtectedRoute>
   );
 }

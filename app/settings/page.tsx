@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { FaUser, FaFileInvoice, FaEnvelope, FaEye, FaEyeSlash, FaCreditCard, FaImage } from 'react-icons/fa';
+import { FaUser, FaFileInvoice, FaEnvelope, FaEye, FaEyeSlash, FaCreditCard, FaImage, FaArrowLeft } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 export default function Settings() {
@@ -15,7 +15,8 @@ export default function Settings() {
   const [settings, setSettings] = useState({
     emailNotifications: false,
     acceptCreditCards: false,
-    acceptBankTransfers: false
+    acceptBankTransfers: false,
+    businessName: ''
   });
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -52,14 +53,18 @@ export default function Settings() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-12">
-          <div className="border-b border-gray-900/10 pb-12 mb-10">
-            <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Manage your account settings and preferences.
-            </p>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {/* Add Back Button */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+          >
+            <FaArrowLeft className="mr-2" />
+            <span>Back to Dashboard</span>
+          </button>
+
+          <h1 className="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
 
           {/* Updated Tabs */}
           <div className="mb-8">
@@ -210,47 +215,66 @@ export default function Settings() {
                   <h2 className="text-base font-semibold text-gray-900">Invoice Customization</h2>
                   <p className="mt-1 text-sm text-gray-500">Customize the appearance of your invoices.</p>
                   
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
-                    <div className="mt-2 flex items-center gap-x-6">
-                      {logoUrl ? (
-                        <img
-                          src={logoUrl}
-                          alt="Company logo"
-                          className="h-24 w-auto object-contain rounded-lg border border-gray-200"
-                        />
-                      ) : (
-                        <div className="h-24 w-40 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-                          <FaImage className="text-gray-400 text-xl" />
-                        </div>
-                      )}
-                      <div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleLogoUpload}
-                          className="hidden"
-                          id="logo-upload"
-                        />
-                        <label
-                          htmlFor="logo-upload"
-                          className={`inline-block rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer ${
-                            uploading ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                        >
-                          {uploading ? 'Uploading...' : logoUrl ? 'Change logo' : 'Upload logo'}
-                        </label>
-                        {logoUrl && (
-                          <button
-                            onClick={() => setLogoUrl(null)}
-                            className="ml-3 text-sm text-red-600 hover:text-red-500"
-                          >
-                            Remove
-                          </button>
+                  <div className="mt-6 space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+                      <input
+                        type="text"
+                        value={settings.businessName}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          businessName: e.target.value
+                        }))}
+                        placeholder="Enter your business name"
+                        className="block w-full rounded-2xl border-0 px-4 py-3 text-gray-900 font-medium shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+                      />
+                      <p className="mt-2 text-xs text-gray-500">
+                        This will be automatically filled when creating new invoices
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
+                      <div className="mt-2 flex items-center gap-x-6">
+                        {logoUrl ? (
+                          <img
+                            src={logoUrl}
+                            alt="Company logo"
+                            className="h-24 w-auto object-contain rounded-lg border border-gray-200"
+                          />
+                        ) : (
+                          <div className="h-24 w-40 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+                            <FaImage className="text-gray-400 text-xl" />
+                          </div>
                         )}
-                        <p className="mt-2 text-xs text-gray-500">
-                          Recommended: 300x100 pixels, PNG or JPG
-                        </p>
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="hidden"
+                            id="logo-upload"
+                          />
+                          <label
+                            htmlFor="logo-upload"
+                            className={`inline-block rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer ${
+                              uploading ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {uploading ? 'Uploading...' : logoUrl ? 'Change logo' : 'Upload logo'}
+                          </label>
+                          {logoUrl && (
+                            <button
+                              onClick={() => setLogoUrl(null)}
+                              className="ml-3 text-sm text-red-600 hover:text-red-500"
+                            >
+                              Remove
+                            </button>
+                          )}
+                          <p className="mt-2 text-xs text-gray-500">
+                            Recommended: 300x100 pixels, PNG or JPG
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
